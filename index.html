@@ -600,10 +600,10 @@ document.getElementById('tipText').textContent = tip.x;
 // Nährwerte: kcal, p=Protein g, c=Carbs g, f=Fett g, b=Ballast g
 // iron=mg, zinc=mg, b12=µg, vitD=µg, ca=Calcium mg, mg=Magnesium mg, omega3=g ALA, vitC=mg, vitA=µg, folat=µg
 const fixedMeals = [
-  { time: '10:00', name: 'Overnight Oats', i: '80g Hafer · 300ml Hafermilch (B12+D3 angereichert) · 1 EL Chia + 1 EL Lein · 100g Beeren · 15 Walnüsse · 1 TL Zimt · 1 EL Mandelmus',
-    n: { kcal: 800, p: 22, c: 80, f: 45, b: 15, iron: 5, zinc: 3, b12: 1.2, vitD: 2.3, ca: 460, mg: 200, omega3: 10, vitC: 30, vitA: 5, folat: 80 } },
-  { time: '14:00', name: 'Mittag-Snack', i: '1 Apfel · 2 EL Mandelmus · 30g Walnüsse · 200g Karotte + Hummus',
-    n: { kcal: 450, p: 12, c: 40, f: 28, b: 10, iron: 3, zinc: 2, b12: 0, vitD: 0, ca: 100, mg: 150, omega3: 2, vitC: 15, vitA: 800, folat: 80 } },
+  { time: '10:00', name: 'Overnight Oats + Banane', i: '80g Hafer · 300ml Hafermilch (B12+D3 angereichert) · 1 Banane in Scheiben · 1 EL Chia + 1 EL Lein · 100g Beeren · 15 Walnüsse · 1 TL Zimt · 1 EL Mandelmus',
+    n: { kcal: 895, p: 23, c: 103, f: 45, b: 18, iron: 5.4, zinc: 3.2, b12: 1.2, vitD: 2.3, ca: 466, mg: 230, omega3: 10, vitC: 40, vitA: 5, folat: 100 } },
+  { time: '14:00', name: 'Mittag-Snack + Banane', i: '1 Apfel · 1 Banane · 2 EL Mandelmus · 30g Walnüsse · 200g Karotte + Hummus',
+    n: { kcal: 545, p: 13, c: 63, f: 28, b: 13, iron: 3.3, zinc: 2.2, b12: 0, vitD: 0, ca: 106, mg: 180, omega3: 2, vitC: 25, vitA: 800, folat: 100 } },
   { time: '17:00', name: 'Post-Workout (nur Trainingstag)', optional: true, i: '1 Banane · 1 Scheibe Vollkornbrot · 1 EL Mandelmus',
     n: { kcal: 350, p: 8, c: 55, f: 14, b: 7, iron: 2, zinc: 1, b12: 0, vitD: 0, ca: 80, mg: 80, omega3: 0.5, vitC: 10, vitA: 5, folat: 30 } },
   { time: '20:00', name: 'Linsen-Kichererbsen-Bowl ★', i: '100g rote Linsen + 1 Dose Kichererbsen · 100g Tofu fest · Zucchini + Paprika in Olivenöl · 2 EL Tahini · 50g Spinat · Zitrone · Knoblauch · Kreuzkümmel · 1 EL Hefeflocken (B12)',
@@ -1350,7 +1350,7 @@ const shoppingList = [
   ]},
   { cat: 'Obst & Gemüse', items: [
     '7 Äpfel',
-    '4 Bananen (Trainingstage)',
+    '18-21 Bananen (3 pro Tag · Kalium + B6, NICHT Kalzium)',
     'Beeren TK 1 kg (Heidelbeeren / Mix)',
     'Karotten 1,5 kg',
     'Zucchini 4-5 Stück',
