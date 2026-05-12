@@ -265,6 +265,32 @@ input[type="number"] { width: 70px; text-align: center; }
 .fill-ok { background: var(--orange); }
 .fill-low { background: var(--danger); }
 .nutrition-note { font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+.shop-group { margin-bottom: 14px; }
+.shop-cat { font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+.shop-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; cursor: pointer; user-select: none; }
+.shop-item.checked { color: var(--muted); text-decoration: line-through; }
+.shop-bullet { color: var(--muted); font-size: 16px; }
+.shop-item.checked .shop-bullet { color: var(--accent); }
+
+.quick-jump {
+  display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 12px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.quick-jump::-webkit-scrollbar { display: none; }
+.quick-chip {
+  flex-shrink: 0; padding: 8px 14px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 600; color: var(--text);
+  cursor: pointer; white-space: nowrap;
+}
+.quick-chip:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+.weight-row { padding: 12px 0; }
+.weight-row + .weight-row { border-top: 1px solid var(--border); }
+.weight-header { display: flex; justify-content: space-between; align-items: center; }
+.weight-input-group { display: flex; gap: 8px; align-items: center; }
+.weight-input-group input { width: 80px; }
 </style>
 </head>
 <body>
@@ -276,43 +302,53 @@ input[type="number"] { width: 70px; text-align: center; }
   </header>
 
   <div id="view-today">
+    <div class="quick-jump" id="quickJump">
+      <div class="quick-chip" onclick="jumpTo('sec-bed')">Schlaf</div>
+      <div class="quick-chip" onclick="jumpTo('sec-plan')">Tagesplan</div>
+      <div class="quick-chip" onclick="jumpTo('sec-meals')">Essen</div>
+      <div class="quick-chip" onclick="jumpTo('sec-supps')">Supps</div>
+      <div class="quick-chip" onclick="jumpTo('sec-train')">Training</div>
+      <div class="quick-chip" onclick="jumpTo('sec-checks')">Checks</div>
+      <div class="quick-chip" onclick="jumpTo('sec-rate')">Bewertung</div>
+    </div>
+
     <div class="tip" id="tipOfDay">
       <div class="tip-title" id="tipTitle">Tipp</div>
       <div id="tipText">…</div>
     </div>
 
-    <div class="card bedtime-card">
+    <div class="card bedtime-card" id="sec-bed">
       <div class="bedtime-label">Schlaf-Ziel</div>
       <div class="bedtime-time" id="bedtimeTime">22:30 → 07:00</div>
       <div class="bedtime-countdown" id="bedtimeCountdown">Berechne…</div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-plan">
       <div class="card-title">Heute · Tagesplan</div>
       <div id="timeline"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-meals">
       <div class="card-title">Was esse ich heute</div>
       <div id="meals"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-supps">
       <div class="card-title">Supplements</div>
       <div id="supplements"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-train">
       <div class="card-title">Training heute</div>
       <div id="trainingToday"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-checks">
       <div class="card-title">Heute-Check</div>
       <div id="checks"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="sec-rate">
       <div class="card-title">Abend-Bewertung</div>
       <div id="ratings"></div>
     </div>
@@ -393,6 +429,24 @@ input[type="number"] { width: 70px; text-align: center; }
     </div>
 
     <div class="card">
+      <div class="card-title">Klimmzüge-Verlauf (28 Tage)</div>
+      <canvas id="pullupChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Bars zeigen tägliche Anzahl. Gesamt-Summe wird größer mit der Zeit.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Gewicht (kg, 28 Tage)</div>
+      <canvas id="weightChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Wassergewicht schwankt täglich. Trend über 2 Wochen aussagekräftig.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Körperfett % (28 Tage)</div>
+      <canvas id="bodyFatChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Waagen-Werte sind oft ungenau. Spiegel + Foto > Zahl.</div>
+    </div>
+
+    <div class="card">
       <div class="card-title">Daten</div>
       <button class="button" onclick="exportData()">Export als JSON</button>
       <button class="button" style="margin-top:8px; color: var(--danger)" onclick="resetData()">Alles zurücksetzen</button>
@@ -400,6 +454,13 @@ input[type="number"] { width: 70px; text-align: center; }
   </div>
 
   <div id="view-more" style="display:none">
+    <div class="card">
+      <div class="card-title">Wochen-Einkaufsliste · 14 Meals</div>
+      <div id="shoppingList"></div>
+      <button class="button" style="margin-top: 12px;" onclick="copyShoppingList()">Liste kopieren</button>
+      <div class="note">Reicht für 7× Overnight Oats, 7× Mittag-Snack, 7× Linsen-Kichererbsen-Bowl + 4× Post-Workout-Snack. ~30-40€/Woche bei Discounter.</div>
+    </div>
+
     <div class="card">
       <div class="card-title">Einstellungen</div>
       <div class="counter">
@@ -857,7 +918,39 @@ function renderRatings() {
       <div class="slider-header"><span>Schlaf letzte Nacht</span><span class="slider-value" id="sleepLabel">${dayData.sleep ?? 7}h</span></div>
       <input type="range" min="3" max="12" step="0.5" value="${dayData.sleep ?? 7}" id="sleepSlider">
     </div>
+    <div class="weight-row">
+      <div class="weight-header">
+        <div>
+          <div class="counter-label">Gewicht heute</div>
+          <div class="counter-info">in kg · z.B. morgens nach WC, ohne Klamotten</div>
+        </div>
+        <div class="weight-input-group">
+          <input type="number" id="weightInput" value="${dayData.weight ?? ''}" step="0.1" min="40" max="200" placeholder="69"><span style="font-size: 13px; color: var(--muted);">kg</span>
+        </div>
+      </div>
+    </div>
+    <div class="weight-row">
+      <div class="weight-header">
+        <div>
+          <div class="counter-label">Körperfett heute</div>
+          <div class="counter-info">in % · falls Waage misst, sonst leer lassen</div>
+        </div>
+        <div class="weight-input-group">
+          <input type="number" id="bodyFatInput" value="${dayData.bodyfat ?? ''}" step="0.1" min="3" max="50" placeholder="15"><span style="font-size: 13px; color: var(--muted);">%</span>
+        </div>
+      </div>
+    </div>
   `;
+  document.getElementById('weightInput').addEventListener('change', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v > 0) { dayData.weight = v; saveDay(); }
+    else { delete dayData.weight; saveDay(); }
+  });
+  document.getElementById('bodyFatInput').addEventListener('change', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v > 0) { dayData.bodyfat = v; saveDay(); }
+    else { delete dayData.bodyfat; saveDay(); }
+  });
   ['pickel', 'stress', 'energy', 'sleep'].forEach(k => {
     const s = document.getElementById(k + 'Slider');
     const l = document.getElementById(k + 'Label');
@@ -1017,7 +1110,7 @@ function updateStats() {
 }
 updateStats();
 
-function drawLineChart(canvasId, dataKey, color, targetVal, invert) {
+function drawLineChart(canvasId, dataKey, color, targetVal, invert, customRange) {
   const c = document.getElementById(canvasId);
   if (!c) return;
   const ctx = c.getContext('2d');
@@ -1034,8 +1127,23 @@ function drawLineChart(canvasId, dataKey, color, targetVal, invert) {
   }
   const pad = 8;
   const innerW = cw - pad * 2, innerH = ch - pad * 2;
-  const max = dataKey === 'sleep' ? 12 : 10;
-  const min = dataKey === 'sleep' ? 3 : 1;
+  let max, min;
+  if (customRange) {
+    const nonNull = values.filter(v => v !== null);
+    if (nonNull.length === 0) {
+      ctx.fillStyle = '#828984'; ctx.font = '12px -apple-system';
+      ctx.textAlign = 'center';
+      ctx.fillText('Noch keine Daten · trag heute deinen Wert ein', cw / 2, ch / 2);
+      return;
+    }
+    const dataMin = Math.min(...nonNull), dataMax = Math.max(...nonNull);
+    const range = Math.max(1, dataMax - dataMin);
+    min = dataMin - range * 0.2;
+    max = dataMax + range * 0.2;
+  } else {
+    max = dataKey === 'sleep' ? 12 : 10;
+    min = dataKey === 'sleep' ? 3 : 1;
+  }
   // gridlines
   ctx.strokeStyle = '#232924'; ctx.lineWidth = 1;
   [0.25, 0.5, 0.75].forEach(f => {
@@ -1069,7 +1177,7 @@ function drawLineChart(canvasId, dataKey, color, targetVal, invert) {
   });
 }
 
-function drawBarChart(canvasId) {
+function drawBarChart(canvasId, valueFn, minMax) {
   const c = document.getElementById(canvasId);
   if (!c) return;
   const ctx = c.getContext('2d');
@@ -1082,11 +1190,11 @@ function drawBarChart(canvasId) {
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
-    values.push(data && data.training && data.training.duration ? data.training.duration : 0);
+    values.push(valueFn ? valueFn(data) : (data && data.training && data.training.duration ? data.training.duration : 0));
   }
   const pad = 8;
   const innerW = cw - pad * 2, innerH = ch - pad * 2;
-  const max = Math.max(120, ...values);
+  const max = Math.max(minMax || 120, ...values);
   const barW = innerW / values.length - 2;
   ctx.fillStyle = '#5ee19a';
   values.forEach((v, i) => {
@@ -1101,6 +1209,11 @@ function drawBarChart(canvasId) {
     ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(cw - pad, y); ctx.stroke();
   });
 }
+
+window.jumpTo = id => {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 
 // === WEEKLY REPORT ===
 function renderWeeklyReport() {
@@ -1214,6 +1327,65 @@ function renderGoals() {
 }
 renderGoals();
 
+// === SHOPPING LIST ===
+const shoppingList = [
+  { cat: 'Trockenwaren / Hülsenfrüchte', items: [
+    'Haferflocken kernig 1 kg',
+    'Rote Linsen 750 g',
+    'Kichererbsen 7 Dosen (à 400 g)',
+    'Quinoa 500 g (Reserve)',
+    'Vollkornbrot 1 Laib (für Post-WO)',
+  ]},
+  { cat: 'Kühlregal', items: [
+    'Hafermilch ungesüßt B12+D-angereichert 3 L (z.B. Oatly Original / Provamel)',
+    'Tofu fest 2 Päckchen (à 400 g)',
+    'Hummus 1 Becher (200-400 g)',
+  ]},
+  { cat: 'Nüsse & Samen', items: [
+    'Walnüsse 500 g',
+    'Chia-Samen 250 g',
+    'Leinsamen geschrotet 250 g',
+    'Mandelmus 1 Glas (250-350 g)',
+    'Tahini (Sesammus) 1 Glas (350 g)',
+  ]},
+  { cat: 'Obst & Gemüse', items: [
+    '7 Äpfel',
+    '4 Bananen (Trainingstage)',
+    'Beeren TK 1 kg (Heidelbeeren / Mix)',
+    'Karotten 1,5 kg',
+    'Zucchini 4-5 Stück',
+    'Paprika 5 Stück',
+    'Spinat frisch oder TK 500 g',
+    '2-3 Zitronen',
+    '1 Knoblauch-Knolle',
+    'Ingwer 1 Knolle',
+  ]},
+  { cat: 'Würzen & Öl', items: [
+    'Olivenöl extra vergine',
+    'Hefeflocken (B12 angereichert) 1 Beutel',
+    'Sojasauce',
+    'Kurkuma · Kreuzkümmel · Zimt · Paprikapulver · Pfeffer · Salz',
+  ]},
+];
+function renderShopping() {
+  document.getElementById('shoppingList').innerHTML = shoppingList.map(g => `
+    <div class="shop-group">
+      <div class="shop-cat">${g.cat}</div>
+      ${g.items.map(it => `
+        <div class="shop-item">
+          <span class="shop-bullet">▢</span>
+          <span>${it}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+renderShopping();
+window.copyShoppingList = () => {
+  const txt = shoppingList.map(g => `### ${g.cat}\n` + g.items.map(i => `- ${i}`).join('\n')).join('\n\n');
+  navigator.clipboard.writeText(txt).then(() => showConfirm('Liste in Zwischenablage kopiert'));
+};
+
 // === WHY ===
 const whyList = [
   { t: 'Schlaf zuerst', x: 'Cortisol bei spätem Schlaf erhöht → Talgdrüsen direkt stimuliert. Stärkster freier Hebel.' },
@@ -1287,6 +1459,9 @@ document.querySelectorAll('.bottom-bar-tab').forEach(t => {
       drawLineChart('pickelChart', 'pickel', '#5ee19a', null, false);
       drawLineChart('sleepChart', 'sleep', '#6db4f5', 7.5, false);
       drawBarChart('trainingChart');
+      drawBarChart('pullupChart', d => (d && d.pullups) ? d.pullups : 0, 20);
+      drawLineChart('weightChart', 'weight', '#f5a96b', null, false, true);
+      drawLineChart('bodyFatChart', 'bodyfat', '#e87a7a', null, false, true);
     }
     window.scrollTo(0, 0);
   });
