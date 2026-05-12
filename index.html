@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hautklar">
+<meta name="theme-color" content="#0a0e0c">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230a0e0c'/><circle cx='90' cy='90' r='38' fill='none' stroke='%235ee19a' stroke-width='8'/><circle cx='75' cy='80' r='4' fill='%235ee19a'/><circle cx='105' cy='80' r='4' fill='%235ee19a'/><path d='M70 105 Q90 118 110 105' stroke='%235ee19a' stroke-width='5' fill='none' stroke-linecap='round'/></svg>">
+<title>Hautklar</title>
+<style>
+:root {
+  --bg: #0a0e0c; --card: #131815; --border: #232924;
+  --text: #e8eae9; --muted: #828984;
+  --accent: #5ee19a; --accent-dim: rgba(94, 225, 154, 0.12);
+  --blue: #6db4f5; --blue-dim: rgba(109, 180, 245, 0.12);
+  --orange: #f5a96b; --danger: #e87a7a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 84px) 0;
+  -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.5;
+  overflow-x: hidden;
+}
+.container { max-width: 480px; margin: 0 auto; padding: 16px; }
+header { padding: 12px 4px 16px; display: flex; justify-content: space-between; align-items: baseline; }
+.title { font-size: 26px; font-weight: 700; letter-spacing: -0.6px; }
+.day-counter { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; margin-bottom: 14px;
+}
+.card-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted); margin-bottom: 14px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.card-title-pill {
+  background: var(--accent-dim); color: var(--accent);
+  padding: 3px 8px; border-radius: 6px; font-size: 10px;
+}
+
+.bedtime-card { text-align: center; background: linear-gradient(140deg, #131815, #1a2520); }
+.bedtime-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+.bedtime-time { font-size: 30px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+.bedtime-countdown { color: var(--accent); font-size: 15px; font-weight: 600; }
+
+.timeline-row { display: flex; gap: 14px; padding: 8px 0; align-items: flex-start; }
+.timeline-row + .timeline-row { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+.timeline-time {
+  flex-shrink: 0; font-size: 12px; color: var(--accent);
+  width: 50px; padding-top: 2px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.timeline-row.past .timeline-time { color: var(--muted); }
+.timeline-row.now { background: var(--accent-dim); margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 8px; }
+.timeline-row.now .timeline-time { color: var(--accent); }
+.timeline-task { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.timeline-detail { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+.meal-block { display: flex; gap: 14px; align-items: flex-start; padding: 10px 0; }
+.meal-block + .meal-block { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 6px; }
+.meal-time { flex-shrink: 0; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; width: 50px; padding-top: 4px; font-weight: 700; }
+.meal-name { font-weight: 600; margin-bottom: 4px; font-size: 15px; }
+.meal-ingredients { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+.supp-group-label {
+  font-size: 11px; color: var(--accent); font-weight: 700;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 12px 0 6px; display: flex; justify-content: space-between;
+}
+.supp-group-label.first { padding-top: 0; }
+.supp-group-time { color: var(--muted); }
+
+.checkbox-row { display: flex; align-items: center; padding: 12px 0; cursor: pointer; user-select: none; }
+.checkbox-row + .checkbox-row, .checkbox-row + .counter, .counter + .checkbox-row, .counter + .counter { border-top: 1px solid var(--border); }
+.checkbox {
+  width: 24px; height: 24px; border: 2px solid var(--border);
+  border-radius: 7px; margin-right: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.checkbox-row.checked .checkbox { background: var(--accent); border-color: var(--accent); }
+.checkbox-row.checked .checkbox::after { content: '✓'; color: var(--bg); font-weight: 800; font-size: 14px; }
+.checkbox-row.checked .checkbox-label { color: var(--muted); text-decoration: line-through; }
+.checkbox-label { font-size: 15px; transition: all 0.15s ease; }
+.checkbox-detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.checkbox-row > div:last-child { flex: 1; }
+.checkbox-dose { color: var(--accent); font-size: 12px; font-weight: 600; }
+
+.counter { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+.counter-label { font-size: 15px; }
+.counter-info { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.counter-controls { display: flex; align-items: center; gap: 12px; }
+.counter-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-size: 20px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.counter-btn:active { background: var(--border); }
+.counter-value { font-size: 20px; font-weight: 700; min-width: 28px; text-align: center; }
+.counter-value.danger { color: var(--danger); }
+.counter-value.ok { color: var(--accent); }
+.counter-value.warning { color: var(--orange); }
+
+.slider-row { padding: 12px 0; }
+.slider-row + .slider-row { border-top: 1px solid var(--border); }
+.slider-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+.slider-value { font-weight: 700; color: var(--accent); }
+input[type="range"] {
+  width: 100%; height: 6px; -webkit-appearance: none;
+  background: var(--border); border-radius: 3px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--accent); cursor: pointer;
+  border: 3px solid var(--bg);
+}
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 8px; text-align: center; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+
+.button {
+  display: block; width: 100%; padding: 14px;
+  border-radius: 12px; background: var(--card); border: 1px solid var(--border);
+  color: var(--text); font-size: 15px; font-weight: 600; cursor: pointer; text-align: center;
+  font-family: inherit;
+}
+.button:active { transform: scale(0.98); }
+.button-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.button-grid .button { padding: 12px; font-size: 13px; }
+
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10, 14, 12, 0.85);
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  display: flex; gap: 2px; justify-content: center; z-index: 100;
+}
+.bottom-bar-tab {
+  flex: 1; padding: 8px 2px;
+  text-align: center; font-size: 10px; font-weight: 600;
+  color: var(--muted); cursor: pointer; border-radius: 8px;
+  letter-spacing: 0.3px;
+}
+.bottom-bar-tab.active { color: var(--accent); background: var(--accent-dim); }
+.bottom-bar-tab-icon { font-size: 20px; display: block; margin-bottom: 2px; font-weight: 400; }
+
+.history-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 14px 0; }
+.history-day {
+  aspect-ratio: 1; border-radius: 7px;
+  background: var(--card); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--muted); font-weight: 600;
+}
+.history-day.good { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.history-day.ok { background: rgba(94, 225, 154, 0.35); color: var(--text); border-color: rgba(94, 225, 154, 0.4); }
+.history-day.bad { background: rgba(232, 122, 122, 0.25); color: var(--text); border-color: rgba(232, 122, 122, 0.3); }
+
+.note { font-size: 12px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+.tip {
+  background: var(--accent-dim);
+  border: 1px solid rgba(94, 225, 154, 0.25);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+  font-size: 13px; line-height: 1.55;
+}
+.tip-title { font-weight: 700; color: var(--accent); margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+.tip.blue { background: var(--blue-dim); border-color: rgba(109, 180, 245, 0.25); }
+.tip.blue .tip-title { color: var(--blue); }
+
+.confirm {
+  position: fixed; bottom: 90px; left: 16px; right: 16px;
+  background: var(--accent); color: var(--bg);
+  padding: 12px 16px; border-radius: 12px;
+  font-weight: 700; text-align: center; font-size: 14px;
+  transform: translateY(200%); transition: transform 0.3s ease;
+  z-index: 200; max-width: 448px; margin: 0 auto;
+}
+.confirm.show { transform: translateY(0); }
+
+.sport-pill {
+  display: inline-block; padding: 8px 14px; border-radius: 20px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  margin: 4px 4px 4px 0;
+}
+.sport-pill.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+.input-text, input[type="time"], input[type="number"] {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: 8px;
+  font-size: 15px; font-family: inherit;
+  -webkit-appearance: none; appearance: none;
+}
+input[type="number"] { width: 70px; text-align: center; }
+
+.photo-angle-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 0; cursor: pointer;
+}
+.photo-angle-row + .photo-angle-row { border-top: 1px solid var(--border); }
+.photo-angle-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 22px;
+}
+.photo-angle-row.done .photo-angle-icon { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.photo-angle-info { flex: 1; }
+.photo-angle-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.photo-angle-detail { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+.weekly-report-line { padding: 8px 0; font-size: 13px; line-height: 1.5; }
+.weekly-report-line + .weekly-report-line { border-top: 1px solid var(--border); }
+.weekly-report-line strong { color: var(--accent); font-weight: 700; }
+.weekly-report-line.warning strong { color: var(--orange); }
+.weekly-report-line.bad strong { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title">Hautklar</div>
+    <div class="day-counter" id="dayCounter">—</div>
+  </header>
+
+  <div id="view-today">
+    <div class="tip" id="tipOfDay">
+      <div class="tip-title" id="tipTitle">Tipp</div>
+      <div id="tipText">…</div>
+    </div>
+
+    <div class="card bedtime-card">
+      <div class="bedtime-label">Schlaf-Ziel</div>
+      <div class="bedtime-time" id="bedtimeTime">22:30 → 07:00</div>
+      <div class="bedtime-countdown" id="bedtimeCountdown">Berechne…</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Heute · Tagesplan</div>
+      <div id="timeline"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Was esse ich heute</div>
+      <div id="meals"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Supplements</div>
+      <div id="supplements"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Training heute</div>
+      <div id="trainingToday"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Heute-Check</div>
+      <div id="checks"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Abend-Bewertung</div>
+      <div id="ratings"></div>
+    </div>
+  </div>
+
+  <div id="view-photo" style="display:none">
+    <div class="tip blue">
+      <div class="tip-title">Foto-Tag · alle 3 Tage</div>
+      Gleiches Licht (z.B. Bad morgens nach Aufstehen). Gleiche Pose. Speicher die Fotos in einem Album "Hautklar" in der iPhone Foto-App. Vergleich nach 14, 28, 42 Tagen.
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        Muskelaufbau · 4 Winkel
+        <span class="card-title-pill" id="bodyPhotoStatus">0 / 4</span>
+      </div>
+      <div id="bodyAngles"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        Haut · Gesicht & Hals
+        <span class="card-title-pill" id="skinPhotoStatus">0 / 3</span>
+      </div>
+      <div id="skinAngles"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Letzte Foto-Tage</div>
+      <div id="photoHistory"></div>
+    </div>
+  </div>
+
+  <div id="view-stats" style="display:none">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="streakValue">0</div>
+        <div class="stat-label">Streak</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="complianceValue">0%</div>
+        <div class="stat-label">Heute</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="sleepAvg">—</div>
+        <div class="stat-label">Ø Schlaf</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Wochenbericht</div>
+      <div id="weeklyReport"></div>
+      <button class="button" style="margin-top:12px" onclick="renderWeeklyReport()">Aktualisieren</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Letzte 14 Tage</div>
+      <div class="history-grid" id="historyGrid"></div>
+      <div class="note">Grün: ≥80% Compliance + Schlaf ≥7h. Hell: 60-80%. Rot: <60%.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pickel-Verlauf (28 Tage)</div>
+      <canvas id="pickelChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Niedriger = besser. Falls flach bleibt nach 4 Wochen → Hautarzt für Adapalen.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Schlaf-Verlauf (28 Tage)</div>
+      <canvas id="sleepChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Ziel-Linie bei 7,5h.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Training-Verlauf (28 Tage)</div>
+      <canvas id="trainingChart" style="width:100%; height:140px"></canvas>
+      <div class="note">Bars zeigen Trainingsdauer in Min pro Tag.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Daten</div>
+      <button class="button" onclick="exportData()">Export als JSON</button>
+      <button class="button" style="margin-top:8px; color: var(--danger)" onclick="resetData()">Alles zurücksetzen</button>
+    </div>
+  </div>
+
+  <div id="view-more" style="display:none">
+    <div class="card">
+      <div class="card-title">Einstellungen</div>
+      <div class="counter">
+        <div>
+          <div class="counter-label">Bettzeit</div>
+          <div class="counter-info">Standard 22:30</div>
+        </div>
+        <input type="time" id="bedtimeInput">
+      </div>
+      <div class="counter">
+        <div>
+          <div class="counter-label">Aufstehzeit</div>
+          <div class="counter-info">Standard 07:00</div>
+        </div>
+        <input type="time" id="wakeInput">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Wochen-Trainingsziele</div>
+      <div id="goalsList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Erinnerungen</div>
+      <button class="button" onclick="requestNotifs()" id="notifBtn">Erinnerungen aktivieren</button>
+      <div class="note" id="notifStatus">Für sichere tägliche Erinnerungen: iOS Kurzbefehle (Anleitung unten).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">iOS Kurzbefehle</div>
+      <div class="note" style="font-size: 13px; line-height: 1.7;">
+        Kurzbefehle-App → Automation → "+" → "Persönliche Automation" → Tageszeit wählen → "Mitteilung anzeigen". Empfehlung 4 Automationen:<br><br>
+        <strong>08:00</strong> "Hautklar — Morgenroutine"<br>
+        <strong>13:00</strong> "Hautklar — Mittag-Snack + Omega-3"<br>
+        <strong>21:30</strong> "Hautklar — Abend-Check + Supps"<br>
+        <strong>22:15</strong> "Hautklar — Bett in 15 Min"
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Warum mache ich das?</div>
+      <div id="whyList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">App-Reset</div>
+      <button class="button" onclick="resetStartDate()">Tag 1 neu starten</button>
+      <div class="note">Setzt nur den Tageszähler zurück. Tagesdaten bleiben.</div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-bar-tab active" data-view="today">
+    <div class="bottom-bar-tab-icon">○</div>HEUTE
+  </div>
+  <div class="bottom-bar-tab" data-view="photo">
+    <div class="bottom-bar-tab-icon">▢</div>FOTO
+  </div>
+  <div class="bottom-bar-tab" data-view="stats">
+    <div class="bottom-bar-tab-icon">▦</div>VERLAUF
+  </div>
+  <div class="bottom-bar-tab" data-view="more">
+    <div class="bottom-bar-tab-icon">⋯</div>MEHR
+  </div>
+</div>
+
+<div class="confirm" id="confirm"></div>
+
+<script>
+const START_KEY = 'hautklar.start';
+const DAY_PREFIX = 'hautklar.day.';
+const SETTINGS_KEY = 'hautklar.settings';
+const GOALS_KEY = 'hautklar.goals';
+const TOTAL_DAYS = 42;
+
+if (!localStorage.getItem(START_KEY)) {
+  localStorage.setItem(START_KEY, new Date().toISOString().split('T')[0]);
+}
+const startDate = new Date(localStorage.getItem(START_KEY));
+const today = new Date(); today.setHours(0,0,0,0);
+const dayNumber = Math.min(Math.floor((today - startDate) / 86400000) + 1, TOTAL_DAYS);
+document.getElementById('dayCounter').textContent = `Tag ${dayNumber} / ${TOTAL_DAYS}`;
+
+const todayKey = DAY_PREFIX + today.toISOString().split('T')[0];
+let dayData = JSON.parse(localStorage.getItem(todayKey) || '{}');
+function saveDay() { localStorage.setItem(todayKey, JSON.stringify(dayData)); updateStats(); }
+
+let settings = { bedtime: '22:30', wake: '07:00', ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') };
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+let goals = { gym: 3, climb: 1, run: 0, yoga: 0, ...JSON.parse(localStorage.getItem(GOALS_KEY) || '{}') };
+function saveGoals() { localStorage.setItem(GOALS_KEY, JSON.stringify(goals)); }
+
+function showConfirm(msg) {
+  const c = document.getElementById('confirm');
+  c.textContent = msg; c.classList.add('show');
+  setTimeout(() => c.classList.remove('show'), 1800);
+}
+
+// === TIPS ===
+const tips = [
+  { t: 'Schlaf zuerst', x: 'Wenn du nur EINE Sache änderst: 22:30 ins Bett. Stärkster freier Hebel.' },
+  { t: 'Eier max 2', x: 'Statt 4-6 weiteren — Tofu, Tempeh, Linsen. Gleicher Protein, kein IGF-1.' },
+  { t: 'Kein Kreatin', x: 'Kreatin pusht DHT bis +56%. Stärkster Akne-Treiber bei Männern.' },
+  { t: 'Cleanser-Reset', x: 'CeraVe Anti-Imperfections hat 2% Salicyl. Max 2×/Tag.' },
+  { t: 'Rasur in Wuchsrichtung', x: 'Gegen Strich = Pseudofolliculitis am Hals. Alle 2-3 Tage.' },
+  { t: 'Hände aus dem Gesicht', x: 'Wir berühren das Gesicht ~20×/Stunde. Bewusst werden = halbe Miete.' },
+  { t: 'Wasser', x: '3L = 6 Gläser à 500ml. Auch beim Training extra.' },
+  { t: 'Kissenbezug', x: 'Täglich umdrehen, wöchentlich waschen. Sammelt Talg.' },
+  { t: 'Niacinamide pausiert', x: 'Bring nach 4 Wochen zurück mit max 5%, nicht 10%.' },
+  { t: 'Iso-Rebound ist normal', x: 'Du bist im Peak-Fenster (5 Monate nach Stop). Keine 2. Iso-Runde.' },
+  { t: 'Handy weg ab 22:00', x: 'Doomscroll = Cortisol-Spike = mehr Sebum.' },
+  { t: 'Nicht quetschen', x: 'Quetschen = Narbe + PIH. Pickel heilen, Narben nicht.' },
+  { t: 'Foto-Vergleich', x: 'Tag-zu-Tag siehst du nichts. 14-Tage-Vergleich sagt die Wahrheit.' },
+  { t: 'Tofu vor Eier', x: 'Tempeh vor Tofu. Linsen vor allem.' },
+  { t: 'Schlaf-Notiz', x: 'Wenn du den Schlaf vermasselst, schreib WAS es war.' },
+  { t: 'Zink abends nüchtern', x: '30 Min vor Schlaf, nicht mit Eisen.' },
+  { t: 'Omega-3 mit Fett', x: 'Fettlöslich. Hauptmahlzeit, nicht nüchtern.' },
+  { t: 'Vitamin D mit Avocado', x: 'Auch fettlöslich. Frühstück mit Avocado = beste Aufnahme.' },
+  { t: 'Substituieren statt streichen', x: 'Eier → Tofu. Reis → Quinoa. Du brauchst nicht weniger essen.' },
+  { t: 'Compliance > Perfektion', x: '80% über 6 Wochen schlägt 100% über 1 Woche.' },
+  { t: 'Training ohne Kreatin geht', x: 'Genug Protein über Hülsenfrüchte + Tofu/Tempeh. 1,6g/kg reicht für Muskelaufbau.' },
+];
+const tip = tips[(dayNumber - 1) % tips.length];
+document.getElementById('tipTitle').textContent = `Tag ${dayNumber} · ${tip.t}`;
+document.getElementById('tipText').textContent = tip.x;
+
+// === MEALS ===
+const mealsByDay = [
+  { b: { name: 'Cheat-Frühstück', i: 'Was du willst, max 3 Eier, kein Milchprodukt' },
+    d: { name: 'Cheat-Abend', i: 'Frei wählbar, kein Käse/Milch/Whey' } },
+  { b: { name: 'Overnight Oats', i: '60g Hafer · 250ml Hafermilch · 1 EL Chia + Lein · Beeren · 10 Walnüsse · Zimt' },
+    d: { name: 'Linsen-Kichererbsen-Bowl', i: '150g rote Linsen · Kichererbsen · Zucchini + Paprika · Tahini · Spinat' } },
+  { b: { name: 'Tofu-Rührei + Vollkorn', i: '200g Tofu · Kurkuma + Pfeffer · Vollkornbrot · ½ Avocado' },
+    d: { name: 'Tempeh + Süßkartoffel', i: '150g Tempeh · Süßkartoffel · 100g Edamame · Spinat · Hefeflocken' } },
+  { b: { name: 'Sojaghurt-Bowl', i: '200g Sojaghurt natur · 30g Müsli ohne Zucker · Mandelmus · Heidelbeeren · Chia' },
+    d: { name: 'Tofu-Stir-Fry + Quinoa', i: '100g Quinoa · 200g Tofu · Brokkoli + Pak Choi + Karotten · Ingwer-Sojasauce' } },
+  { b: { name: 'Overnight Oats', i: '60g Hafer · 250ml Hafermilch · 1 EL Chia + Lein · Beeren · 10 Walnüsse · Zimt' },
+    d: { name: 'Linsen-Kichererbsen-Bowl', i: '150g rote Linsen · Kichererbsen · Zucchini + Paprika · Tahini · Spinat' } },
+  { b: { name: 'Tofu-Rührei + Vollkorn', i: '200g Tofu · Kurkuma + Pfeffer · Vollkornbrot · ½ Avocado' },
+    d: { name: 'Tempeh + Süßkartoffel', i: '150g Tempeh · Süßkartoffel · 100g Edamame · Spinat · Hefeflocken' } },
+  { b: { name: 'Sojaghurt-Bowl', i: '200g Sojaghurt natur · 30g Müsli ohne Zucker · Mandelmus · Heidelbeeren · Chia' },
+    d: { name: 'Tofu-Stir-Fry + Quinoa', i: '100g Quinoa · 200g Tofu · Brokkoli + Pak Choi + Karotten · Ingwer-Sojasauce' } },
+];
+const todayMeals = mealsByDay[today.getDay()];
+document.getElementById('meals').innerHTML = `
+  <div class="meal-block">
+    <div class="meal-time">10:00</div>
+    <div><div class="meal-name">${todayMeals.b.name}</div><div class="meal-ingredients">${todayMeals.b.i}</div></div>
+  </div>
+  <div class="meal-block">
+    <div class="meal-time">14:00</div>
+    <div><div class="meal-name">Mittagessen (Reste / Snack)</div><div class="meal-ingredients">Reste vom Vortag, oder: Hummus + Karotte + Vollkornbrot, oder Apfel + Mandelmus</div></div>
+  </div>
+  <div class="meal-block">
+    <div class="meal-time">20:00</div>
+    <div><div class="meal-name">${todayMeals.d.name}</div><div class="meal-ingredients">${todayMeals.d.i}</div></div>
+  </div>
+`;
+
+// === TIMELINE ===
+function renderTimeline() {
+  const items = [
+    { time: '07:00', task: 'Aufstehen', detail: 'Wecker aus, Licht an, 1 Glas Wasser' },
+    { time: '07:15', task: 'Skincare morgens', detail: 'CeraVe Hydrating → Moisturizer → SPF' },
+    { time: '08:00', task: 'Frühstück + Supps morgens', detail: 'NAC · D3+K2 · Omega-3' },
+    { time: '13:00', task: 'Omega-3 (optional) + Mittagessen', detail: '1 Kapsel mit Mahlzeit' },
+    { time: '17:00 / 18:00', task: 'Training (optional)', detail: 'Gym / Laufen / Bouldern — siehe Wochenplan' },
+    { time: '20:00', task: 'Abendessen', detail: 'Hülsenfrüchte / Tofu / Quinoa' },
+    { time: '21:30', task: 'Skincare + Supps abends', detail: 'NAC · Zink · CeraVe → Moisturizer' },
+    { time: '22:00', task: 'Wind-down', detail: 'Handy weg, Licht runter, Lesen / Stretchen' },
+    { time: settings.bedtime, task: 'Schlafen', detail: 'Licht aus, kein Bildschirm' },
+  ];
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const tl = items.map(it => {
+    const [h, m] = it.time.split(/[:\/]/).map(s => parseInt(s));
+    const itemMin = h * 60 + (m || 0);
+    let cls = '';
+    if (itemMin < nowMin - 30) cls = 'past';
+    else if (itemMin >= nowMin - 30 && itemMin <= nowMin + 60) cls = 'now';
+    return `<div class="timeline-row ${cls}">
+      <div class="timeline-time">${it.time}</div>
+      <div>
+        <div class="timeline-task">${it.task}</div>
+        <div class="timeline-detail">${it.detail}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('timeline').innerHTML = tl;
+}
+renderTimeline();
+setInterval(renderTimeline, 60000);
+
+// === SUPPLEMENTS ===
+const suppGroups = [
+  { time: '08:00', label: 'Morgens · mit Frühstück', items: [
+    { id: 'nac_am', name: 'NAC', dose: '600 mg', detail: '1 Kapsel, mit Wasser' },
+    { id: 'd3', name: 'Vitamin D3 + K2', dose: '3000-5000 IU', detail: '3-5 Kapseln (1000 IU/Kap)' },
+    { id: 'omega_am', name: 'Omega-3 DHA', dose: '~1 g', detail: '2 Kapseln zum Essen' },
+  ]},
+  { time: '13:00', label: 'Mittags · optional', items: [
+    { id: 'omega_pm', name: 'Omega-3 DHA', dose: '~500 mg', detail: '1 Kapsel (wenn nicht morgens 2)' },
+  ]},
+  { time: '21:30', label: 'Abends · vor Schlaf', items: [
+    { id: 'nac_pm', name: 'NAC', dose: '600 mg', detail: '1 Kapsel' },
+    { id: 'zinc', name: 'Zink Glycinat', dose: '30 mg', detail: 'nüchtern, 30 Min vor Schlaf' },
+  ]},
+];
+function renderSupps() {
+  document.getElementById('supplements').innerHTML = suppGroups.map((g, gi) => `
+    <div class="supp-group-label ${gi === 0 ? 'first' : ''}">
+      <span>${g.label}</span><span class="supp-group-time">${g.time}</span>
+    </div>
+    ${g.items.map(s => `
+      <div class="checkbox-row ${dayData[s.id] ? 'checked' : ''}" data-id="${s.id}">
+        <div class="checkbox"></div>
+        <div>
+          <div class="checkbox-label">${s.name} <span class="checkbox-dose">${s.dose}</span></div>
+          <div class="checkbox-detail">${s.detail}</div>
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+}
+renderSupps();
+document.getElementById('supplements').addEventListener('click', e => {
+  const r = e.target.closest('.checkbox-row'); if (!r) return;
+  dayData[r.dataset.id] = !dayData[r.dataset.id]; saveDay(); renderSupps();
+});
+
+// === TRAINING ===
+const sports = [
+  { id: 'gym', name: 'Gym' },
+  { id: 'climb', name: 'Bouldern' },
+  { id: 'run', name: 'Laufen' },
+  { id: 'yoga', name: 'Yoga' },
+  { id: 'swim', name: 'Schwimmen' },
+  { id: 'bike', name: 'Rad' },
+  { id: 'walk', name: 'Wandern' },
+  { id: 'other', name: 'Andere' },
+];
+function renderTraining() {
+  const t = dayData.training || {};
+  document.getElementById('trainingToday').innerHTML = `
+    <div class="counter-info" style="margin-bottom: 8px;">Heute trainiert? Sportart antippen:</div>
+    <div style="margin-bottom: 12px;">
+      ${sports.map(s => `<span class="sport-pill ${t.sport === s.id ? 'active' : ''}" data-sport="${s.id}">${s.name}</span>`).join('')}
+    </div>
+    ${t.sport ? `
+      <div class="counter">
+        <div>
+          <div class="counter-label">Dauer</div>
+          <div class="counter-info">in Minuten</div>
+        </div>
+        <input type="number" id="trainDuration" value="${t.duration || ''}" min="0" max="500" placeholder="60">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span>Intensität</span>
+          <span class="slider-value" id="trainIntLabel">${t.intensity || 5} / 10</span>
+        </div>
+        <input type="range" min="1" max="10" value="${t.intensity || 5}" id="trainIntSlider">
+      </div>
+      <div class="counter" style="border-top: 1px solid var(--border);">
+        <div>
+          <div class="counter-label">Geschwitzt → geduscht?</div>
+        </div>
+        <div class="counter-controls">
+          <span class="sport-pill ${t.showered ? 'active' : ''}" data-toggle="showered">Ja</span>
+        </div>
+      </div>
+    ` : ''}
+  `;
+  if (t.sport) {
+    document.getElementById('trainDuration').addEventListener('change', e => {
+      dayData.training = { ...dayData.training, duration: parseInt(e.target.value) || 0 };
+      saveDay();
+    });
+    const sl = document.getElementById('trainIntSlider');
+    sl.addEventListener('input', () => document.getElementById('trainIntLabel').textContent = sl.value + ' / 10');
+    sl.addEventListener('change', () => {
+      dayData.training = { ...dayData.training, intensity: parseInt(sl.value) };
+      saveDay();
+    });
+  }
+}
+renderTraining();
+document.getElementById('trainingToday').addEventListener('click', e => {
+  const sport = e.target.dataset.sport;
+  const toggle = e.target.dataset.toggle;
+  if (sport) {
+    const current = dayData.training?.sport;
+    if (current === sport) {
+      delete dayData.training;
+    } else {
+      dayData.training = { ...dayData.training, sport };
+    }
+    saveDay(); renderTraining();
+  } else if (toggle === 'showered') {
+    dayData.training = { ...dayData.training, showered: !dayData.training?.showered };
+    saveDay(); renderTraining();
+  }
+});
+
+// === CHECKS ===
+function renderChecks() {
+  const eggs = dayData.eggs ?? 0;
+  const ec = eggs > 2 ? 'danger' : (eggs > 0 ? 'warning' : 'ok');
+  document.getElementById('checks').innerHTML = `
+    <div class="counter">
+      <div>
+        <div class="counter-label">Eier heute</div>
+        <div class="counter-info">max 2 — Rest über Tofu/Tempeh/Linsen</div>
+      </div>
+      <div class="counter-controls">
+        <div class="counter-btn" onclick="changeEggs(-1)">−</div>
+        <div class="counter-value ${ec}">${eggs}</div>
+        <div class="counter-btn" onclick="changeEggs(1)">+</div>
+      </div>
+    </div>
+    <div class="checkbox-row ${dayData.skincare_am ? 'checked' : ''}" data-flag="skincare_am">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Skincare morgens</div><div class="checkbox-detail">CeraVe Hydrating → SPF</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.skincare_pm ? 'checked' : ''}" data-flag="skincare_pm">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Skincare abends</div><div class="checkbox-detail">CeraVe Hydrating → Moisturizer</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.shaved ? 'checked' : ''}" data-flag="shaved">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Heute rasiert</div><div class="checkbox-detail">alle 2-3 Tage, in Wuchsrichtung</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.no_old_supps ? 'checked' : ''}" data-flag="no_old_supps">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Kein Kreatin / DIM / Beta-Carotin</div><div class="checkbox-detail">heute nicht genommen</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.water ? 'checked' : ''}" data-flag="water">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">3L Wasser</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.no_touch ? 'checked' : ''}" data-flag="no_touch">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Hände aus dem Gesicht</div></div>
+    </div>
+    <div class="checkbox-row ${dayData.pillowcase ? 'checked' : ''}" data-flag="pillowcase">
+      <div class="checkbox"></div>
+      <div><div class="checkbox-label">Kissenbezug gewechselt / gedreht</div></div>
+    </div>
+  `;
+}
+window.changeEggs = d => { dayData.eggs = Math.max(0, (dayData.eggs ?? 0) + d); saveDay(); renderChecks(); };
+renderChecks();
+document.getElementById('checks').addEventListener('click', e => {
+  const r = e.target.closest('.checkbox-row'); if (!r) return;
+  const f = r.dataset.flag; if (!f) return;
+  dayData[f] = !dayData[f]; saveDay(); renderChecks();
+});
+
+// === RATINGS ===
+function renderRatings() {
+  document.getElementById('ratings').innerHTML = `
+    <div class="slider-row">
+      <div class="slider-header"><span>Pickel heute</span><span class="slider-value" id="pickelLabel">${dayData.pickel ?? 5} / 10</span></div>
+      <input type="range" min="1" max="10" value="${dayData.pickel ?? 5}" id="pickelSlider">
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span>Stress heute</span><span class="slider-value" id="stressLabel">${dayData.stress ?? 5} / 10</span></div>
+      <input type="range" min="1" max="10" value="${dayData.stress ?? 5}" id="stressSlider">
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span>Energie heute</span><span class="slider-value" id="energyLabel">${dayData.energy ?? 5} / 10</span></div>
+      <input type="range" min="1" max="10" value="${dayData.energy ?? 5}" id="energySlider">
+    </div>
+    <div class="slider-row">
+      <div class="slider-header"><span>Schlaf letzte Nacht</span><span class="slider-value" id="sleepLabel">${dayData.sleep ?? 7}h</span></div>
+      <input type="range" min="3" max="12" step="0.5" value="${dayData.sleep ?? 7}" id="sleepSlider">
+    </div>
+  `;
+  ['pickel', 'stress', 'energy', 'sleep'].forEach(k => {
+    const s = document.getElementById(k + 'Slider');
+    const l = document.getElementById(k + 'Label');
+    s.addEventListener('input', () => {
+      const v = parseFloat(s.value); dayData[k] = v;
+      l.textContent = k === 'sleep' ? v + 'h' : v + ' / 10';
+    });
+    s.addEventListener('change', saveDay);
+  });
+}
+renderRatings();
+
+// === BEDTIME ===
+function updateBedtime() {
+  const [bh, bm] = settings.bedtime.split(':').map(Number);
+  const [wh, wm] = settings.wake.split(':').map(Number);
+  const now = new Date();
+  const target = new Date(); target.setHours(bh, bm, 0, 0);
+  if (now > target) target.setDate(target.getDate() + 1);
+  const diff = target - now;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const cd = document.getElementById('bedtimeCountdown');
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const bedMin = bh * 60 + bm;
+  const wakeMin = wh * 60 + wm;
+  if (nowMin >= bedMin - 30 && nowMin < bedMin) {
+    cd.textContent = `JETZT vorbereiten · noch ${bedMin - nowMin} Min`;
+    cd.style.color = 'var(--orange)';
+  } else if (h < 1 && nowMin < bedMin) {
+    cd.textContent = `Noch ${m} Min bis Bett`;
+    cd.style.color = 'var(--accent)';
+  } else if (nowMin >= bedMin || nowMin < wakeMin) {
+    cd.textContent = `Schlafen · Aufstehen ${settings.wake}`;
+    cd.style.color = 'var(--accent)';
+  } else {
+    cd.textContent = `Noch ${h} Std ${m} Min bis Bett`;
+    cd.style.color = 'var(--accent)';
+  }
+  document.getElementById('bedtimeTime').textContent = `${settings.bedtime} → ${settings.wake}`;
+}
+updateBedtime();
+setInterval(updateBedtime, 30000);
+
+// === PHOTOS ===
+const bodyAnglesArr = [
+  { id: 'front', name: 'Frontal', detail: 'Gerade zur Kamera · Arme entspannt seitlich · gleicher Stand' },
+  { id: 'side_l', name: 'Profil links', detail: 'Linke Seite zur Kamera · Arme natürlich · Blick geradeaus' },
+  { id: 'side_r', name: 'Profil rechts', detail: 'Rechte Seite zur Kamera · Arme natürlich · Blick geradeaus' },
+  { id: 'back', name: 'Hinten', detail: 'Rücken zur Kamera · Arme leicht angehoben · gleicher Stand' },
+];
+const skinAnglesArr = [
+  { id: 'face', name: 'Gesicht frontal', detail: 'Frontal · Bad-Beleuchtung morgens · keine Filter · neutraler Ausdruck' },
+  { id: 'neck_l', name: 'Hals links', detail: 'Kopf nach rechts gedreht · Hals-Region links sichtbar' },
+  { id: 'neck_r', name: 'Hals rechts', detail: 'Kopf nach links gedreht · Hals-Region rechts sichtbar' },
+];
+function renderPhotoTab() {
+  const photos = dayData.photos || {};
+  const bodyDone = bodyAnglesArr.filter(a => photos[a.id]).length;
+  const skinDone = skinAnglesArr.filter(a => photos[a.id]).length;
+  document.getElementById('bodyPhotoStatus').textContent = `${bodyDone} / 4`;
+  document.getElementById('skinPhotoStatus').textContent = `${skinDone} / 3`;
+  document.getElementById('bodyAngles').innerHTML = bodyAnglesArr.map(a => `
+    <div class="photo-angle-row ${photos[a.id] ? 'done' : ''}" data-pid="${a.id}">
+      <div class="photo-angle-icon">${photos[a.id] ? '✓' : '▢'}</div>
+      <div class="photo-angle-info">
+        <div class="photo-angle-name">${a.name}</div>
+        <div class="photo-angle-detail">${a.detail}</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('skinAngles').innerHTML = skinAnglesArr.map(a => `
+    <div class="photo-angle-row ${photos[a.id] ? 'done' : ''}" data-pid="${a.id}">
+      <div class="photo-angle-icon">${photos[a.id] ? '✓' : '▢'}</div>
+      <div class="photo-angle-info">
+        <div class="photo-angle-name">${a.name}</div>
+        <div class="photo-angle-detail">${a.detail}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // History
+  const hist = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    if (data && data.photos) {
+      const total = Object.values(data.photos).filter(v => v).length;
+      if (total > 0) hist.push({ date: d, total });
+    }
+  }
+  document.getElementById('photoHistory').innerHTML = hist.length ? hist.slice(0, 7).map(h => `
+    <div class="timeline-row">
+      <div class="timeline-time">${('0'+h.date.getDate()).slice(-2)}.${('0'+(h.date.getMonth()+1)).slice(-2)}.</div>
+      <div><div class="timeline-task">${h.total} Fotos gemacht</div></div>
+    </div>
+  `).join('') : '<div class="note">Noch keine Fotos. Heute starten!</div>';
+}
+renderPhotoTab();
+document.addEventListener('click', e => {
+  const row = e.target.closest('.photo-angle-row');
+  if (!row) return;
+  const pid = row.dataset.pid;
+  const i = document.createElement('input');
+  i.type = 'file'; i.accept = 'image/*'; i.capture = 'environment';
+  i.click();
+  i.addEventListener('change', () => {
+    dayData.photos = { ...dayData.photos, [pid]: true };
+    saveDay();
+    renderPhotoTab();
+    showConfirm('Speicher das Foto im iPhone-Album "Hautklar"');
+  });
+});
+
+// === STATS ===
+function calcCompliance(d) {
+  const flags = ['nac_am', 'd3', 'omega_am', 'zinc', 'skincare_am', 'skincare_pm', 'water', 'no_old_supps', 'no_touch', 'pillowcase'];
+  const done = flags.filter(f => d[f]).length;
+  let total = flags.length + 1;
+  let bonus = ((d.eggs ?? 0) <= 2) ? 1 : 0;
+  return (done + bonus) / total;
+}
+function updateStats() {
+  let streak = 0;
+  let allSleep = [];
+  let broken = false;
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    if (data) {
+      if (data.sleep) allSleep.push(data.sleep);
+      const c = calcCompliance(data);
+      if (!broken && c >= 0.6 && (data.sleep ?? 0) >= 7) streak++;
+      else if (i > 0) broken = true;
+    } else if (i > 0) broken = true;
+  }
+  document.getElementById('streakValue').textContent = streak;
+  document.getElementById('complianceValue').textContent = Math.round(calcCompliance(dayData) * 100) + '%';
+  document.getElementById('sleepAvg').textContent = allSleep.length ? (allSleep.reduce((a,b)=>a+b,0)/allSleep.length).toFixed(1) + 'h' : '—';
+
+  const grid = document.getElementById('historyGrid');
+  grid.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const cell = document.createElement('div');
+    cell.className = 'history-day'; cell.textContent = d.getDate();
+    if (data) {
+      const c = calcCompliance(data);
+      if (c >= 0.8 && (data.sleep ?? 0) >= 7) cell.classList.add('good');
+      else if (c >= 0.6) cell.classList.add('ok');
+      else cell.classList.add('bad');
+    }
+    grid.appendChild(cell);
+  }
+}
+updateStats();
+
+function drawLineChart(canvasId, dataKey, color, targetVal, invert) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width = c.offsetWidth * 2;
+  const h = c.height = 280;
+  ctx.scale(2, 2);
+  const cw = w / 2, ch = h / 2;
+  ctx.clearRect(0, 0, cw, ch);
+  const values = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    values.push(data && data[dataKey] ? data[dataKey] : null);
+  }
+  const pad = 8;
+  const innerW = cw - pad * 2, innerH = ch - pad * 2;
+  const max = dataKey === 'sleep' ? 12 : 10;
+  const min = dataKey === 'sleep' ? 3 : 1;
+  // gridlines
+  ctx.strokeStyle = '#232924'; ctx.lineWidth = 1;
+  [0.25, 0.5, 0.75].forEach(f => {
+    const y = pad + f * innerH;
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(cw - pad, y); ctx.stroke();
+  });
+  // target line
+  if (targetVal !== null) {
+    const ty = pad + ((max - targetVal) / (max - min)) * innerH;
+    ctx.strokeStyle = 'rgba(245, 169, 107, 0.6)'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(pad, ty); ctx.lineTo(cw - pad, ty); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // data line
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath();
+  let started = false;
+  values.forEach((v, i) => {
+    if (v === null) return;
+    const x = pad + (i / (values.length - 1)) * innerW;
+    const y = pad + ((max - v) / (max - min)) * innerH;
+    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = color;
+  values.forEach((v, i) => {
+    if (v === null) return;
+    const x = pad + (i / (values.length - 1)) * innerW;
+    const y = pad + ((max - v) / (max - min)) * innerH;
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawBarChart(canvasId) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width = c.offsetWidth * 2;
+  const h = c.height = 280;
+  ctx.scale(2, 2);
+  const cw = w / 2, ch = h / 2;
+  ctx.clearRect(0, 0, cw, ch);
+  const values = [];
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    values.push(data && data.training && data.training.duration ? data.training.duration : 0);
+  }
+  const pad = 8;
+  const innerW = cw - pad * 2, innerH = ch - pad * 2;
+  const max = Math.max(120, ...values);
+  const barW = innerW / values.length - 2;
+  ctx.fillStyle = '#5ee19a';
+  values.forEach((v, i) => {
+    if (v === 0) return;
+    const x = pad + i * (innerW / values.length) + 1;
+    const barH = (v / max) * innerH;
+    ctx.fillRect(x, pad + innerH - barH, barW, barH);
+  });
+  ctx.strokeStyle = '#232924'; ctx.lineWidth = 1;
+  [0.25, 0.5, 0.75].forEach(f => {
+    const y = pad + f * innerH;
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(cw - pad, y); ctx.stroke();
+  });
+}
+
+// === WEEKLY REPORT ===
+function renderWeeklyReport() {
+  const lines = [];
+  let totalSleep = 0, sleepDays = 0;
+  let workouts = {};
+  let eggsHigh = 0;
+  let pickelStart = null, pickelEnd = null;
+  let compliantDays = 0;
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    if (!data) continue;
+    if (data.sleep) { totalSleep += data.sleep; sleepDays++; }
+    if (data.training?.sport) workouts[data.training.sport] = (workouts[data.training.sport] || 0) + 1;
+    if ((data.eggs ?? 0) > 2) eggsHigh++;
+    if (data.pickel !== undefined) {
+      if (pickelStart === null) pickelStart = data.pickel;
+      pickelEnd = data.pickel;
+    }
+    if (calcCompliance(data) >= 0.7) compliantDays++;
+  }
+
+  // Schlaf
+  const sleepTarget = 7.5 * 7;
+  const sleepDiff = sleepTarget - totalSleep;
+  if (sleepDays === 0) {
+    lines.push({ text: 'Keine Schlafdaten diese Woche. Trag die Stunden ein!', cls: 'warning' });
+  } else {
+    const avg = (totalSleep / sleepDays).toFixed(1);
+    if (sleepDiff <= 0) lines.push({ text: `<strong>Schlaf-Soll erreicht!</strong> Ø ${avg}h, ${totalSleep.toFixed(1)}h gesamt.` });
+    else if (sleepDiff < 7) lines.push({ text: `Schlaf: Ø ${avg}h — <strong>${sleepDiff.toFixed(1)}h unter Soll</strong>. Eine Nacht mehr Schlaf nächste Woche.`, cls: 'warning' });
+    else lines.push({ text: `Schlaf: Ø ${avg}h — <strong>${sleepDiff.toFixed(1)}h zu wenig</strong>. Das ist der Hauptbremser.`, cls: 'bad' });
+  }
+
+  // Training
+  const totalWorkouts = Object.values(workouts).reduce((a,b) => a+b, 0);
+  if (totalWorkouts === 0) {
+    lines.push({ text: '<strong>0× trainiert</strong> diese Woche. Bewegung hilft Stress & Schlaf.', cls: 'bad' });
+  } else {
+    const sportNames = Object.entries(workouts).map(([k,v]) => `${v}× ${sports.find(s=>s.id===k)?.name || k}`).join(', ');
+    lines.push({ text: `Training: <strong>${totalWorkouts}× insgesamt</strong> — ${sportNames}` });
+  }
+  // Goal checks
+  Object.entries(goals).forEach(([key, target]) => {
+    if (target === 0) return;
+    const actual = workouts[key] || 0;
+    const sportName = sports.find(s=>s.id===key)?.name || key;
+    if (actual < target) {
+      lines.push({ text: `<strong>${sportName}: ${actual}/${target}×</strong> — ${target - actual}× zu wenig`, cls: 'warning' });
+    } else {
+      lines.push({ text: `<strong>${sportName}: ${actual}/${target}× ✓</strong>` });
+    }
+  });
+
+  // Eier
+  if (eggsHigh > 0) {
+    lines.push({ text: `Eier: <strong>${eggsHigh} Tage über 2</strong>. Wechsel auf Tofu/Tempeh.`, cls: 'warning' });
+  } else {
+    lines.push({ text: '<strong>Eier-Limit eingehalten</strong> alle 7 Tage. Stark.' });
+  }
+
+  // Pickel
+  if (pickelStart !== null && pickelEnd !== null) {
+    const change = pickelEnd - pickelStart;
+    if (change < -0.5) lines.push({ text: `<strong>Pickel: ${pickelStart} → ${pickelEnd}</strong> · Verbesserung um ${(-change).toFixed(1)}` });
+    else if (change > 0.5) lines.push({ text: `<strong>Pickel: ${pickelStart} → ${pickelEnd}</strong> · leichter Anstieg`, cls: 'warning' });
+    else lines.push({ text: `Pickel: ${pickelStart} → ${pickelEnd} · stabil` });
+  }
+
+  // Compliance
+  lines.push({ text: `Disziplin: <strong>${compliantDays}/7 Tage über 70%</strong>` });
+
+  // Tipp für nächste Woche
+  let tipNext = '';
+  if (sleepDays > 0 && totalSleep / sleepDays < 7) tipNext = 'Nächste Woche: Bettzeit eine Stunde früher. Alles andere folgt.';
+  else if (eggsHigh > 2) tipNext = 'Nächste Woche: 1 Tofu-Block am Sonntag vorkochen.';
+  else if (totalWorkouts < 2) tipNext = 'Nächste Woche: 2× Bewegung minimum — auch ein Spaziergang zählt.';
+  else if (compliantDays < 5) tipNext = 'Nächste Woche: Fokus auf 3 Sachen (Schlaf · Skincare · Eier), Rest folgt.';
+  else tipNext = 'Nächste Woche: Foto-Vergleich mit Tag 1. Du wirst Veränderungen sehen.';
+
+  lines.push({ text: `<strong>Fokus nächste Woche:</strong> ${tipNext}` });
+
+  document.getElementById('weeklyReport').innerHTML = lines.map(l =>
+    `<div class="weekly-report-line ${l.cls || ''}">${l.text}</div>`
+  ).join('');
+}
+renderWeeklyReport();
+
+// === GOALS ===
+function renderGoals() {
+  document.getElementById('goalsList').innerHTML = ['gym', 'climb', 'run', 'yoga'].map(k => {
+    const sportName = sports.find(s=>s.id===k)?.name || k;
+    return `
+      <div class="counter">
+        <div>
+          <div class="counter-label">${sportName}</div>
+          <div class="counter-info">pro Woche</div>
+        </div>
+        <input type="number" data-goal="${k}" value="${goals[k] || 0}" min="0" max="14">
+      </div>
+    `;
+  }).join('');
+  document.querySelectorAll('[data-goal]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      goals[inp.dataset.goal] = parseInt(inp.value) || 0;
+      saveGoals();
+    });
+  });
+}
+renderGoals();
+
+// === WHY ===
+const whyList = [
+  { t: 'Schlaf zuerst', x: 'Cortisol bei spätem Schlaf erhöht → Talgdrüsen direkt stimuliert. Stärkster freier Hebel.' },
+  { t: 'Eier max 2/Tag', x: 'Eier → IGF-1 → Sebum-Bombe. Ersatz: Tofu, Tempeh, Linsen.' },
+  { t: 'Kein Kreatin', x: 'DHT +56% in Studien. Stärkster Akne-Treiber bei Männern.' },
+  { t: 'Kein DIM', x: 'Bei Männern erhöht es Testosteron-Wirkung. Falsche Richtung für deine Akne.' },
+  { t: 'Cleanser-Reset', x: 'CeraVe Anti-Imperfections = 2% Salicyl. Max 2×/Tag. Plus Niacinamide weg.' },
+  { t: 'Rasur', x: 'Gegen Strich täglich = Pseudofolliculitis am Hals. Alle 2-3 Tage, in Wuchsrichtung.' },
+  { t: 'Iso-Rebound', x: '22-37% Rückfallrate. Du bist im Peak-Fenster (5 Mon. nach Stop). Adapalen ist die Maintenance.' },
+  { t: 'Training trotzdem', x: 'Bewegung senkt Stress, hilft Schlaf, baut Testosteron-Gleichgewicht. Aber ohne Kreatin.' },
+  { t: 'Foto-Tracking', x: 'Du siehst dich täglich. Veränderungen merkst du nicht. 14-Tage-Vergleich zeigt sie.' },
+  { t: 'Compliance > Perfektion', x: '80% über 6 Wochen schlägt 100% über 1 Woche und dann aufgeben.' },
+];
+document.getElementById('whyList').innerHTML = whyList.map(w => `
+  <div class="tip" style="margin-bottom: 8px;">
+    <div class="tip-title">${w.t}</div>
+    ${w.x}
+  </div>
+`).join('');
+
+// === SETTINGS INPUTS ===
+const bedtimeInput = document.getElementById('bedtimeInput');
+const wakeInput = document.getElementById('wakeInput');
+bedtimeInput.value = settings.bedtime;
+wakeInput.value = settings.wake;
+bedtimeInput.addEventListener('change', () => {
+  settings.bedtime = bedtimeInput.value || '22:30';
+  saveSettings(); updateBedtime(); renderTimeline();
+});
+wakeInput.addEventListener('change', () => {
+  settings.wake = wakeInput.value || '07:00';
+  saveSettings(); updateBedtime();
+});
+
+// === NOTIFICATIONS ===
+function updateNotifStatus() {
+  const btn = document.getElementById('notifBtn');
+  const status = document.getElementById('notifStatus');
+  if (!('Notification' in window)) {
+    btn.textContent = 'Nicht unterstützt';
+    btn.style.opacity = 0.5;
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    btn.textContent = '✓ Aktiv · Test senden';
+    status.textContent = 'Funktioniert in installierter PWA. Für 100% Zuverlässigkeit: Kurzbefehle (siehe unten).';
+  } else if (Notification.permission === 'denied') {
+    btn.textContent = 'Blockiert · iOS-Einstellungen';
+  }
+}
+updateNotifStatus();
+window.requestNotifs = async () => {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    new Notification('Hautklar', { body: 'Test erfolgreich.' });
+    return;
+  }
+  const r = await Notification.requestPermission();
+  if (r === 'granted') new Notification('Hautklar', { body: 'Erinnerungen aktiv.' });
+  updateNotifStatus();
+};
+
+// === NAVIGATION ===
+document.querySelectorAll('.bottom-bar-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.bottom-bar-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelectorAll('[id^=view-]').forEach(v => v.style.display = 'none');
+    document.getElementById('view-' + t.dataset.view).style.display = 'block';
+    if (t.dataset.view === 'stats') {
+      drawLineChart('pickelChart', 'pickel', '#5ee19a', null, false);
+      drawLineChart('sleepChart', 'sleep', '#6db4f5', 7.5, false);
+      drawBarChart('trainingChart');
+    }
+    window.scrollTo(0, 0);
+  });
+});
+
+// === EXPORT / RESET ===
+window.exportData = () => {
+  const out = {};
+  Object.keys(localStorage).filter(k => k.startsWith('hautklar.')).forEach(k => out[k] = localStorage.getItem(k));
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hautklar-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+};
+window.resetData = () => {
+  if (!confirm('Wirklich ALLES zurücksetzen?')) return;
+  Object.keys(localStorage).filter(k => k.startsWith('hautklar.')).forEach(k => localStorage.removeItem(k));
+  location.reload();
+};
+window.resetStartDate = () => {
+  if (!confirm('Tageszähler auf Tag 1 zurücksetzen?')) return;
+  localStorage.setItem(START_KEY, new Date().toISOString().split('T')[0]);
+  location.reload();
+};
+</script>
+</body>
+</html>
