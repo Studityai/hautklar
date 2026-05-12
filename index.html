@@ -251,6 +251,20 @@ input[type="number"] { width: 70px; text-align: center; }
 .pullup-btn:active { background: var(--accent); color: var(--bg); transform: scale(0.95); }
 .pullup-btn.minus { color: var(--orange); }
 .pullup-btn.reset { color: var(--muted); font-size: 12px; }
+
+.water-row { padding: 14px 0 4px; border-top: 1px solid var(--border); }
+.water-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.water-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+.water-fill { height: 100%; background: linear-gradient(90deg, #6db4f5, #5ee19a); border-radius: 4px; transition: width 0.3s ease; }
+.water-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+.pct-good { color: var(--accent); }
+.pct-ok { color: var(--orange); }
+.pct-low { color: var(--danger); }
+.fill-good { background: var(--accent); }
+.fill-ok { background: var(--orange); }
+.fill-low { background: var(--danger); }
+.nutrition-note { font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; }
 </style>
 </head>
 <body>
@@ -522,17 +536,39 @@ document.getElementById('tipTitle').textContent = `Tag ${dayNumber} · ${tip.t}`
 document.getElementById('tipText').textContent = tip.x;
 
 // === MEALS · fix für maximale Akne + Muskel-Optimierung ===
+// Nährwerte: kcal, p=Protein g, c=Carbs g, f=Fett g, b=Ballast g
+// iron=mg, zinc=mg, b12=µg, vitD=µg, ca=Calcium mg, mg=Magnesium mg, omega3=g ALA, vitC=mg, vitA=µg, folat=µg
 const fixedMeals = [
-  { time: '10:00', name: 'Overnight Oats', i: '80g Hafer · 300ml Hafermilch · 1 EL Chia + 1 EL Lein · 100g Beeren · 15 Walnüsse · 1 TL Zimt · 1 EL Mandelmus', n: { kcal: 800, p: 22, c: 80, f: 45, b: 15 } },
-  { time: '14:00', name: 'Mittag-Snack', i: '1 Apfel · 2 EL Mandelmus · 30g Walnüsse · 200g Karotte + Hummus', n: { kcal: 450, p: 12, c: 40, f: 28, b: 10 } },
-  { time: '17:00', name: 'Post-Workout (nur Trainingstag)', i: '1 Banane · 1 Scheibe Vollkornbrot · 1 EL Mandelmus', n: { kcal: 350, p: 8, c: 55, f: 14, b: 7 }, optional: true },
-  { time: '20:00', name: 'Linsen-Kichererbsen-Bowl ★', i: '100g rote Linsen + 1 Dose Kichererbsen · 100g Tofu fest · Zucchini + Paprika in Olivenöl · 2 EL Tahini · 50g Spinat · Zitrone · Knoblauch · Kreuzkümmel · 1 EL Hefeflocken', n: { kcal: 880, p: 55, c: 100, f: 28, b: 25 } },
+  { time: '10:00', name: 'Overnight Oats', i: '80g Hafer · 300ml Hafermilch (B12+D3 angereichert) · 1 EL Chia + 1 EL Lein · 100g Beeren · 15 Walnüsse · 1 TL Zimt · 1 EL Mandelmus',
+    n: { kcal: 800, p: 22, c: 80, f: 45, b: 15, iron: 5, zinc: 3, b12: 1.2, vitD: 2.3, ca: 460, mg: 200, omega3: 10, vitC: 30, vitA: 5, folat: 80 } },
+  { time: '14:00', name: 'Mittag-Snack', i: '1 Apfel · 2 EL Mandelmus · 30g Walnüsse · 200g Karotte + Hummus',
+    n: { kcal: 450, p: 12, c: 40, f: 28, b: 10, iron: 3, zinc: 2, b12: 0, vitD: 0, ca: 100, mg: 150, omega3: 2, vitC: 15, vitA: 800, folat: 80 } },
+  { time: '17:00', name: 'Post-Workout (nur Trainingstag)', optional: true, i: '1 Banane · 1 Scheibe Vollkornbrot · 1 EL Mandelmus',
+    n: { kcal: 350, p: 8, c: 55, f: 14, b: 7, iron: 2, zinc: 1, b12: 0, vitD: 0, ca: 80, mg: 80, omega3: 0.5, vitC: 10, vitA: 5, folat: 30 } },
+  { time: '20:00', name: 'Linsen-Kichererbsen-Bowl ★', i: '100g rote Linsen + 1 Dose Kichererbsen · 100g Tofu fest · Zucchini + Paprika in Olivenöl · 2 EL Tahini · 50g Spinat · Zitrone · Knoblauch · Kreuzkümmel · 1 EL Hefeflocken (B12)',
+    n: { kcal: 880, p: 55, c: 100, f: 28, b: 25, iron: 14, zinc: 6, b12: 1, vitD: 0, ca: 450, mg: 150, omega3: 1, vitC: 100, vitA: 250, folat: 300 } },
 ];
-const dailyTargets = { kcal: 2500, p: 110, c: 280, f: 80, b: 30 };
-const total = fixedMeals.reduce((a, m) => ({
-  kcal: a.kcal + m.n.kcal, p: a.p + m.n.p, c: a.c + m.n.c, f: a.f + m.n.f, b: a.b + m.n.b
-}), { kcal: 0, p: 0, c: 0, f: 0, b: 0 });
-const labels = { kcal: 'Kalorien', p: 'Protein (g)', c: 'Kohlenhydrate (g)', f: 'Fett (g)', b: 'Ballaststoffe (g)' };
+const dailyTargets = {
+  kcal: { val: 2500, unit: '', label: 'Kalorien', critical: true },
+  p:    { val: 110,  unit: 'g', label: 'Protein', critical: true },
+  c:    { val: 280,  unit: 'g', label: 'Kohlenhydrate' },
+  f:    { val: 80,   unit: 'g', label: 'Fett' },
+  b:    { val: 30,   unit: 'g', label: 'Ballaststoffe', critical: true },
+  iron: { val: 10,   unit: 'mg', label: 'Eisen', critical: true },
+  zinc: { val: 11,   unit: 'mg', label: 'Zink (+ Supp 30mg!)' },
+  b12:  { val: 4,    unit: 'µg', label: 'Vitamin B12', critical: true, note: 'vegetarisch oft knapp' },
+  vitD: { val: 20,   unit: 'µg', label: 'Vit D (+ Supp 75-125µg!)' },
+  ca:   { val: 1000, unit: 'mg', label: 'Calcium', critical: true, note: 'ohne Milch wichtig' },
+  mg:   { val: 400,  unit: 'mg', label: 'Magnesium' },
+  omega3: { val: 1.6, unit: 'g', label: 'Omega-3 ALA (+ DHA-Supp)' },
+  vitC: { val: 110,  unit: 'mg', label: 'Vitamin C' },
+  vitA: { val: 900,  unit: 'µg', label: 'Vitamin A' },
+  folat: { val: 300, unit: 'µg', label: 'Folat' },
+};
+const total = fixedMeals.reduce((a, m) => {
+  Object.keys(m.n).forEach(k => { a[k] = (a[k] || 0) + m.n[k]; });
+  return a;
+}, {});
 document.getElementById('meals').innerHTML = `
   ${fixedMeals.map(m => `
     <div class="meal-block ${m.optional ? 'optional' : ''}">
@@ -545,20 +581,26 @@ document.getElementById('meals').innerHTML = `
     </div>
   `).join('')}
   <div style="border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px;">
-    <div class="card-title" style="margin-bottom: 10px;">Tagesbilanz</div>
-    ${['kcal', 'p', 'c', 'f', 'b'].map(k => {
-      const pct = Math.min(100, (total[k] / dailyTargets[k]) * 100);
+    <div class="card-title" style="margin-bottom: 10px;">Tagesbilanz · was du heute abdeckst</div>
+    ${Object.keys(dailyTargets).map(k => {
+      const t = dailyTargets[k];
+      const got = total[k] || 0;
+      const gotR = got >= 10 ? Math.round(got) : Math.round(got * 10) / 10;
+      const pct = Math.min(100, (got / t.val) * 100);
+      const pctR = Math.round(pct);
+      const status = pct >= 100 ? 'good' : pct >= 70 ? 'ok' : 'low';
       return `
         <div class="nutrition-row">
           <div class="nutrition-label">
-            <span>${labels[k]}</span>
-            <span class="nutrition-vals"><strong>${total[k]}</strong> / ${dailyTargets[k]}</span>
+            <span>${t.label}${t.critical ? ' ●' : ''}</span>
+            <span class="nutrition-vals"><strong class="pct-${status}">${pctR}%</strong> · ${gotR}/${t.val}${t.unit}</span>
           </div>
-          <div class="nutrition-bar"><div class="nutrition-fill" style="width: ${pct}%"></div></div>
+          <div class="nutrition-bar"><div class="nutrition-fill fill-${status}" style="width: ${pct}%"></div></div>
+          ${t.note ? `<div class="nutrition-note">${t.note}</div>` : ''}
         </div>
       `;
     }).join('')}
-    <div class="note">Ziel basiert auf 19J · 69kg · 185cm · aktiv. Trainingstag inkl. Post-Workout-Snack erreicht ~2450 kcal · 102g Protein.</div>
+    <div class="note">● = kritisch · Werte ohne Post-Workout-Snack. Mit Supplements: Zink+30mg, D3 3000-5000IU, Omega-3 DHA ~1g zusätzlich. Trainingstag: +350 kcal +8g Protein durch Post-WO.</div>
   </div>
 `;
 
@@ -741,9 +783,22 @@ function renderChecks() {
       <div class="checkbox"></div>
       <div><div class="checkbox-label">Kein Kreatin / DIM / Beta-Carotin</div><div class="checkbox-detail">heute nicht genommen</div></div>
     </div>
-    <div class="checkbox-row ${dayData.water ? 'checked' : ''}" data-flag="water">
-      <div class="checkbox"></div>
-      <div><div class="checkbox-label">3L Wasser</div></div>
+    <div class="water-row">
+      <div class="water-header">
+        <div>
+          <div class="counter-label">Wasser heute</div>
+          <div class="counter-info">Ziel 3L · tipp eine Menge an um zu addieren</div>
+        </div>
+        <div class="counter-value ${(dayData.water ?? 0) >= 3 ? 'ok' : (dayData.water ?? 0) >= 2 ? 'warning' : 'danger'}" style="font-size: 22px;">${((dayData.water ?? 0)).toFixed(1)}L</div>
+      </div>
+      <div class="water-bar"><div class="water-fill" style="width: ${Math.min(100, ((dayData.water ?? 0)/3)*100)}%"></div></div>
+      <div class="water-btns">
+        <button class="pullup-btn" onclick="changeWater(0.3)">+0,3L</button>
+        <button class="pullup-btn" onclick="changeWater(0.5)">+0,5L</button>
+        <button class="pullup-btn" onclick="changeWater(1.0)">+1,0L</button>
+        <button class="pullup-btn minus" onclick="changeWater(-0.3)">−0,3L</button>
+        <button class="pullup-btn reset" onclick="resetWater()">Reset</button>
+      </div>
     </div>
     <div class="checkbox-row ${dayData.no_touch ? 'checked' : ''}" data-flag="no_touch">
       <div class="checkbox"></div>
@@ -774,6 +829,8 @@ function renderChecks() {
 window.changeEggs = d => { dayData.eggs = Math.max(0, (dayData.eggs ?? 0) + d); saveDay(); renderChecks(); };
 window.changePullups = d => { dayData.pullups = Math.max(0, (dayData.pullups ?? 0) + d); saveDay(); renderChecks(); };
 window.resetPullups = () => { if (confirm('Klimmzüge-Counter heute zurücksetzen?')) { dayData.pullups = 0; saveDay(); renderChecks(); } };
+window.changeWater = d => { dayData.water = Math.max(0, Math.round(((dayData.water ?? 0) + d) * 10) / 10); saveDay(); renderChecks(); };
+window.resetWater = () => { if (confirm('Wasser-Counter heute zurücksetzen?')) { dayData.water = 0; saveDay(); renderChecks(); } };
 renderChecks();
 document.getElementById('checks').addEventListener('click', e => {
   const r = e.target.closest('.checkbox-row'); if (!r) return;
@@ -917,11 +974,12 @@ document.addEventListener('click', e => {
 
 // === STATS ===
 function calcCompliance(d) {
-  const flags = ['nac_am', 'd3', 'omega_am', 'zinc', 'skincare_am', 'skincare_pm', 'water', 'no_old_supps', 'no_touch', 'pillowcase'];
+  const flags = ['nac_am', 'd3', 'omega_am', 'zinc', 'skincare_am', 'skincare_pm', 'no_old_supps', 'no_touch', 'pillowcase'];
   const done = flags.filter(f => d[f]).length;
-  let total = flags.length + 1;
+  let total = flags.length + 2;
   let bonus = ((d.eggs ?? 0) <= 2) ? 1 : 0;
-  return (done + bonus) / total;
+  let waterBonus = ((d.water ?? 0) >= 2.5) ? 1 : 0;
+  return (done + bonus + waterBonus) / total;
 }
 function updateStats() {
   let streak = 0;
