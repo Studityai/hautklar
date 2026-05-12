@@ -291,6 +291,70 @@ input[type="number"] { width: 70px; text-align: center; }
 .weight-header { display: flex; justify-content: space-between; align-items: center; }
 .weight-input-group { display: flex; gap: 8px; align-items: center; }
 .weight-input-group input { width: 80px; }
+
+.meal-block { cursor: pointer; transition: background 0.15s ease; padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; border-radius: 10px; }
+.meal-block:active { background: var(--bg); }
+.meal-arrow { color: var(--accent); font-size: 18px; align-self: center; padding-left: 8px; }
+
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  z-index: 500; display: none;
+  overflow-y: auto;
+}
+.modal-bg.show { display: block; }
+.modal-content {
+  max-width: 480px; margin: 0 auto;
+  background: var(--bg);
+  min-height: 100vh;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 40px);
+}
+.modal-close {
+  position: fixed; top: calc(env(safe-area-inset-top) + 16px); right: 16px;
+  width: 40px; height: 40px; border-radius: 20px;
+  background: rgba(10,14,12,0.9); border: 1px solid var(--border);
+  color: var(--text); font-size: 18px; cursor: pointer;
+  z-index: 501; -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit; font-weight: 600;
+}
+.recipe-image {
+  width: calc(100% + 32px); height: 220px;
+  object-fit: cover; margin: 0 -16px 16px;
+  background: var(--card);
+}
+.recipe-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
+.recipe-meta { color: var(--muted); font-size: 13px; margin-bottom: 20px; display: flex; gap: 14px; }
+.recipe-section { margin-bottom: 24px; }
+.recipe-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--accent); margin-bottom: 12px;
+}
+.recipe-steps { padding-left: 24px; }
+.recipe-steps li { padding: 8px 0; line-height: 1.55; font-size: 14px; }
+.recipe-tips { background: var(--accent-dim); border: 1px solid rgba(94,225,154,0.25); padding: 14px; border-radius: 12px; font-size: 13px; line-height: 1.55; }
+
+.photo-thumb {
+  width: 60px; height: 60px; border-radius: 8px;
+  object-fit: cover; cursor: pointer;
+  border: 2px solid var(--accent);
+}
+.photo-session { padding: 14px 0; }
+.photo-session + .photo-session { border-top: 1px solid var(--border); }
+.photo-session-date { font-size: 13px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+.photo-session-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.photo-thumb-small { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; cursor: pointer; border: 1px solid var(--border); }
+
+.photo-viewer {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 600; display: none;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.photo-viewer.show { display: flex; }
+.photo-viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -531,6 +595,31 @@ input[type="number"] { width: 70px; text-align: center; }
 
 <div class="confirm" id="confirm"></div>
 
+<div class="modal-bg" id="recipeModal">
+  <button class="modal-close" onclick="closeRecipe()">✕</button>
+  <div class="modal-content">
+    <img class="recipe-image" id="recipeImage" alt="">
+    <div class="recipe-title" id="recipeTitle">Rezept</div>
+    <div class="recipe-meta" id="recipeMeta"></div>
+    <div class="recipe-section">
+      <div class="recipe-section-title">Zutaten</div>
+      <div id="recipeIngredients" class="meal-ingredients"></div>
+    </div>
+    <div class="recipe-section">
+      <div class="recipe-section-title">Zubereitung</div>
+      <ol class="recipe-steps" id="recipeSteps"></ol>
+    </div>
+    <div class="recipe-section">
+      <div class="recipe-section-title">Tipp</div>
+      <div class="recipe-tips" id="recipeTips"></div>
+    </div>
+  </div>
+</div>
+
+<div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
+  <img id="photoViewerImg" alt="">
+</div>
+
 <script>
 const START_KEY = 'hautklar.start';
 const DAY_PREFIX = 'hautklar.day.';
@@ -631,14 +720,15 @@ const total = fixedMeals.reduce((a, m) => {
   return a;
 }, {});
 document.getElementById('meals').innerHTML = `
-  ${fixedMeals.map(m => `
-    <div class="meal-block ${m.optional ? 'optional' : ''}">
+  ${fixedMeals.map((m, idx) => `
+    <div class="meal-block ${m.optional ? 'optional' : ''}" onclick="showRecipe(${idx})">
       <div class="meal-time">${m.time}</div>
       <div style="flex: 1;">
         <div class="meal-name">${m.name}</div>
         <div class="meal-ingredients">${m.i}</div>
         <div class="meal-nutrition">${m.n.kcal} kcal · ${m.n.p}g P · ${m.n.c}g K · ${m.n.f}g F · ${m.n.b}g Ballast.</div>
       </div>
+      <div class="meal-arrow">›</div>
     </div>
   `).join('')}
   <div style="border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px;">
@@ -664,6 +754,94 @@ document.getElementById('meals').innerHTML = `
     <div class="note">● = kritisch · Werte ohne Post-Workout-Snack. Mit Supplements: Zink+30mg, D3 3000-5000IU, Omega-3 DHA ~1g zusätzlich. Trainingstag: +350 kcal +8g Protein durch Post-WO.</div>
   </div>
 `;
+
+// === RECIPES ===
+const recipes = [
+  {
+    img: 'https://images.unsplash.com/photo-1517673400267-0251440c45dc?w=800&q=80&auto=format',
+    time: '5 Min Vorbereitung · 4 Std Kühlen',
+    diff: '★ Sehr einfach',
+    steps: [
+      'Am Vorabend: 80g Haferflocken in ein großes Glas (mind. 400ml) geben.',
+      '300ml angereicherte Hafermilch (mit B12 + D + Calcium) drüber gießen.',
+      '1 EL Chia + 1 EL geschrotete Leinsamen dazu, gut umrühren.',
+      '1 EL Mandelmus und 1 TL Zimt unterrühren.',
+      'Glas zudrehen, mindestens 4 Std — am besten über Nacht — in den Kühlschrank.',
+      'Morgens: 1 Banane in Scheiben schneiden, drauflegen.',
+      '100g Beeren (TK aus dem Gefrierfach 5 Min auftauen, oder frisch) + 15 Walnüsse zerbröselt obendrauf.',
+      'Direkt aus dem Glas essen.'
+    ],
+    tips: 'Mach am Sonntag 3 Gläser auf einmal — hält bis Mittwoch. Beeren erst morgens drauf, sonst weichen sie durch. Wenn dir das Glas zu wenig süß ist: 1 Tropfen Vanille-Extrakt oder ½ TL Ahornsirup.'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1505576391880-b3f9d713dc4f?w=800&q=80&auto=format',
+    time: '3 Min',
+    diff: '★ Sofort',
+    steps: [
+      'Apfel waschen, Banane bereithalten.',
+      '200g Karotten schälen und in Sticks schneiden.',
+      '2 EL Hummus in eine kleine Schale, 2 EL Mandelmus in eine andere.',
+      '30g Walnüsse in eine Snack-Box (oder direkt naschen).',
+      'Karotten in Hummus dippen. Apfel + Banane separat essen, Mandelmus zum Dippen.'
+    ],
+    tips: 'Perfekter Uni-Snack: alles in Snack-Boxen, Hummus + Mandelmus in kleine Schraubgläser. Karotten-Sticks am Sonntag für die Woche vorbereiten und in feuchtem Geschirrtuch im Kühlschrank — bleiben knackig.'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1565299543923-37dd37887442?w=800&q=80&auto=format',
+    time: '2 Min',
+    diff: '★ Sofort',
+    steps: [
+      '1 Scheibe Vollkornbrot toasten (optional).',
+      '1 EL Mandelmus drauf streichen.',
+      '1 Banane in Scheiben drauflegen.',
+      'Innerhalb 30 Min nach dem Training essen.'
+    ],
+    tips: 'Carbs + Protein nach dem Training füllen Muskel-Glykogen schnell auf. Banane = schnelle Kohlenhydrate, Mandelmus = Eiweiß + Fett. Wasser dazu trinken.'
+  },
+  {
+    img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80&auto=format',
+    time: '20 Min',
+    diff: '★★ Easy',
+    steps: [
+      '100g rote Linsen in Topf · 250ml Wasser + Prise Salz · aufkochen, 10-12 Min köcheln bis weich.',
+      'Währenddessen: 1 Zucchini + 1 Paprika in Würfel schneiden.',
+      'Pfanne erhitzen, 1 EL Olivenöl rein, Zucchini + Paprika 5-6 Min anbraten.',
+      '2 Knoblauchzehen pressen + 1 TL Kreuzkümmel dazu, kurz mitrösten (1 Min).',
+      '100g Tofu (fest, kalziumgesetzt) in Würfel, dazu geben, kross anbraten 3-4 Min.',
+      '1 Dose Kichererbsen abspülen, in die Pfanne dazu, kurz erwärmen.',
+      'Linsen abgießen wenn weich.',
+      'In große Schüssel anrichten: Linsen unten, Pfanne-Mix oben, 50g frischer Spinat dazwischen.',
+      'Dressing: 2 EL Tahini + Saft 1/2 Zitrone + 2 EL Wasser mit Gabel cremig rühren — über Bowl gießen.',
+      '1 EL Hefeflocken (B12-angereichert!) obendrauf streuen.'
+    ],
+    tips: 'Sonntags 3× Portion kochen — hält 3 Tage im Kühlschrank. Tahini-Dressing separat aufbewahren, erst beim Essen drüber. Im Sommer auch kalt lecker. Reste am nächsten Tag in Wrap mit etwas Salat = neue Mahlzeit.'
+  }
+];
+window.showRecipe = (idx) => {
+  const m = fixedMeals[idx];
+  const r = recipes[idx];
+  document.getElementById('recipeImage').src = r.img;
+  document.getElementById('recipeImage').onerror = function() {
+    this.style.background = 'linear-gradient(135deg, #131815, #1a2520)';
+    this.style.display = 'flex';
+    this.style.alignItems = 'center';
+    this.style.justifyContent = 'center';
+    this.removeAttribute('src');
+    this.alt = m.name;
+  };
+  document.getElementById('recipeTitle').textContent = m.name;
+  document.getElementById('recipeMeta').innerHTML = `<span>⏱ ${r.time}</span><span>${r.diff}</span><span>${m.n.kcal} kcal</span>`;
+  document.getElementById('recipeIngredients').textContent = m.i;
+  document.getElementById('recipeSteps').innerHTML = r.steps.map(s => `<li>${s}</li>`).join('');
+  document.getElementById('recipeTips').textContent = r.tips;
+  document.getElementById('recipeModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  window.scrollTo(0, 0);
+};
+window.closeRecipe = () => {
+  document.getElementById('recipeModal').classList.remove('show');
+  document.body.style.overflow = '';
+};
 
 // === TIMELINE ===
 function renderTimeline() {
@@ -1007,63 +1185,97 @@ const skinAnglesArr = [
   { id: 'neck_l', name: 'Hals links', detail: 'Kopf nach rechts gedreht · Hals-Region links sichtbar' },
   { id: 'neck_r', name: 'Hals rechts', detail: 'Kopf nach links gedreht · Hals-Region rechts sichtbar' },
 ];
+function resizeImage(file, maxW, q) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', q));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderPhotoTab() {
   const photos = dayData.photos || {};
+  const photoData = dayData.photoData || {};
   const bodyDone = bodyAnglesArr.filter(a => photos[a.id]).length;
   const skinDone = skinAnglesArr.filter(a => photos[a.id]).length;
   document.getElementById('bodyPhotoStatus').textContent = `${bodyDone} / 4`;
   document.getElementById('skinPhotoStatus').textContent = `${skinDone} / 3`;
-  document.getElementById('bodyAngles').innerHTML = bodyAnglesArr.map(a => `
+  const angleHTML = (a) => `
     <div class="photo-angle-row ${photos[a.id] ? 'done' : ''}" data-pid="${a.id}">
       <div class="photo-angle-icon">${photos[a.id] ? '✓' : '▢'}</div>
       <div class="photo-angle-info">
         <div class="photo-angle-name">${a.name}</div>
         <div class="photo-angle-detail">${a.detail}</div>
       </div>
+      ${photoData[a.id] ? `<img class="photo-thumb" src="${photoData[a.id]}" onclick="event.stopPropagation(); viewPhoto('${photoData[a.id].replace(/'/g, "\\'")}')">` : ''}
     </div>
-  `).join('');
-  document.getElementById('skinAngles').innerHTML = skinAnglesArr.map(a => `
-    <div class="photo-angle-row ${photos[a.id] ? 'done' : ''}" data-pid="${a.id}">
-      <div class="photo-angle-icon">${photos[a.id] ? '✓' : '▢'}</div>
-      <div class="photo-angle-info">
-        <div class="photo-angle-name">${a.name}</div>
-        <div class="photo-angle-detail">${a.detail}</div>
-      </div>
-    </div>
-  `).join('');
+  `;
+  document.getElementById('bodyAngles').innerHTML = bodyAnglesArr.map(angleHTML).join('');
+  document.getElementById('skinAngles').innerHTML = skinAnglesArr.map(angleHTML).join('');
 
-  // History
-  const hist = [];
-  for (let i = 0; i < 30; i++) {
+  // History — show actual photo thumbnails
+  const sessions = [];
+  for (let i = 0; i < 60; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
-    if (data && data.photos) {
-      const total = Object.values(data.photos).filter(v => v).length;
-      if (total > 0) hist.push({ date: d, total });
+    if (data && data.photoData) {
+      const keys = Object.keys(data.photoData);
+      if (keys.length > 0) sessions.push({ date: d, photoData: data.photoData, keys });
     }
   }
-  document.getElementById('photoHistory').innerHTML = hist.length ? hist.slice(0, 7).map(h => `
-    <div class="timeline-row">
-      <div class="timeline-time">${('0'+h.date.getDate()).slice(-2)}.${('0'+(h.date.getMonth()+1)).slice(-2)}.</div>
-      <div><div class="timeline-task">${h.total} Fotos gemacht</div></div>
+  document.getElementById('photoHistory').innerHTML = sessions.length ? sessions.map(s => `
+    <div class="photo-session">
+      <div class="photo-session-date">${s.date.toLocaleDateString('de-DE', {weekday: 'short', day: 'numeric', month: 'short'})}</div>
+      <div class="photo-session-grid">
+        ${s.keys.map(k => `<img class="photo-thumb-small" src="${s.photoData[k]}" onclick="viewPhoto('${s.photoData[k].replace(/'/g, "\\'")}')">`).join('')}
+      </div>
     </div>
-  `).join('') : '<div class="note">Noch keine Fotos. Heute starten!</div>';
+  `).join('') : '<div class="note">Noch keine Fotos. Antippe einen Winkel um Foto zu machen.</div>';
 }
 renderPhotoTab();
-document.addEventListener('click', e => {
+document.addEventListener('click', async (e) => {
   const row = e.target.closest('.photo-angle-row');
   if (!row) return;
   const pid = row.dataset.pid;
-  const i = document.createElement('input');
-  i.type = 'file'; i.accept = 'image/*'; i.capture = 'environment';
-  i.click();
-  i.addEventListener('change', () => {
-    dayData.photos = { ...dayData.photos, [pid]: true };
-    saveDay();
-    renderPhotoTab();
-    showConfirm('Speicher das Foto im iPhone-Album "Hautklar"');
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+  inp.click();
+  inp.addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    showConfirm('Komprimiere…');
+    try {
+      const resized = await resizeImage(file, 500, 0.7);
+      dayData.photoData = { ...(dayData.photoData || {}), [pid]: resized };
+      dayData.photos = { ...dayData.photos, [pid]: true };
+      saveDay();
+      renderPhotoTab();
+      showConfirm('Foto gespeichert!');
+    } catch (err) {
+      showConfirm('Fehler: ' + err.message);
+    }
   });
 });
+
+window.viewPhoto = (src) => {
+  document.getElementById('photoViewerImg').src = src;
+  document.getElementById('photoViewer').classList.add('show');
+};
+window.closePhotoViewer = () => document.getElementById('photoViewer').classList.remove('show');
 
 // === STATS ===
 function calcCompliance(d) {
