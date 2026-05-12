@@ -227,6 +227,30 @@ input[type="number"] { width: 70px; text-align: center; }
 .weekly-report-line strong { color: var(--accent); font-weight: 700; }
 .weekly-report-line.warning strong { color: var(--orange); }
 .weekly-report-line.bad strong { color: var(--danger); }
+
+.meal-nutrition { font-size: 11px; color: var(--accent); margin-top: 4px; font-weight: 600; letter-spacing: 0.2px; }
+.meal-block.optional { opacity: 0.6; }
+.meal-block.optional .meal-name::after { content: ' · optional'; color: var(--muted); font-weight: 400; }
+
+.nutrition-row { padding: 6px 0; }
+.nutrition-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.nutrition-vals { color: var(--muted); }
+.nutrition-vals strong { color: var(--text); font-weight: 700; }
+.nutrition-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.nutrition-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; }
+
+.pullup-row { padding: 14px 0 4px; border-top: 1px solid var(--border); }
+.pullup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.pullup-btns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pullup-btn {
+  padding: 12px 4px; border-radius: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--accent); font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.pullup-btn:active { background: var(--accent); color: var(--bg); transform: scale(0.95); }
+.pullup-btn.minus { color: var(--orange); }
+.pullup-btn.reset { color: var(--muted); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -497,36 +521,44 @@ const tip = tips[(dayNumber - 1) % tips.length];
 document.getElementById('tipTitle').textContent = `Tag ${dayNumber} · ${tip.t}`;
 document.getElementById('tipText').textContent = tip.x;
 
-// === MEALS ===
-const mealsByDay = [
-  { b: { name: 'Cheat-Frühstück', i: 'Was du willst, max 3 Eier, kein Milchprodukt' },
-    d: { name: 'Cheat-Abend', i: 'Frei wählbar, kein Käse/Milch/Whey' } },
-  { b: { name: 'Overnight Oats', i: '60g Hafer · 250ml Hafermilch · 1 EL Chia + Lein · Beeren · 10 Walnüsse · Zimt' },
-    d: { name: 'Linsen-Kichererbsen-Bowl', i: '150g rote Linsen · Kichererbsen · Zucchini + Paprika · Tahini · Spinat' } },
-  { b: { name: 'Tofu-Rührei + Vollkorn', i: '200g Tofu · Kurkuma + Pfeffer · Vollkornbrot · ½ Avocado' },
-    d: { name: 'Tempeh + Süßkartoffel', i: '150g Tempeh · Süßkartoffel · 100g Edamame · Spinat · Hefeflocken' } },
-  { b: { name: 'Sojaghurt-Bowl', i: '200g Sojaghurt natur · 30g Müsli ohne Zucker · Mandelmus · Heidelbeeren · Chia' },
-    d: { name: 'Tofu-Stir-Fry + Quinoa', i: '100g Quinoa · 200g Tofu · Brokkoli + Pak Choi + Karotten · Ingwer-Sojasauce' } },
-  { b: { name: 'Overnight Oats', i: '60g Hafer · 250ml Hafermilch · 1 EL Chia + Lein · Beeren · 10 Walnüsse · Zimt' },
-    d: { name: 'Linsen-Kichererbsen-Bowl', i: '150g rote Linsen · Kichererbsen · Zucchini + Paprika · Tahini · Spinat' } },
-  { b: { name: 'Tofu-Rührei + Vollkorn', i: '200g Tofu · Kurkuma + Pfeffer · Vollkornbrot · ½ Avocado' },
-    d: { name: 'Tempeh + Süßkartoffel', i: '150g Tempeh · Süßkartoffel · 100g Edamame · Spinat · Hefeflocken' } },
-  { b: { name: 'Sojaghurt-Bowl', i: '200g Sojaghurt natur · 30g Müsli ohne Zucker · Mandelmus · Heidelbeeren · Chia' },
-    d: { name: 'Tofu-Stir-Fry + Quinoa', i: '100g Quinoa · 200g Tofu · Brokkoli + Pak Choi + Karotten · Ingwer-Sojasauce' } },
+// === MEALS · fix für maximale Akne + Muskel-Optimierung ===
+const fixedMeals = [
+  { time: '10:00', name: 'Overnight Oats', i: '80g Hafer · 300ml Hafermilch · 1 EL Chia + 1 EL Lein · 100g Beeren · 15 Walnüsse · 1 TL Zimt · 1 EL Mandelmus', n: { kcal: 800, p: 22, c: 80, f: 45, b: 15 } },
+  { time: '14:00', name: 'Mittag-Snack', i: '1 Apfel · 2 EL Mandelmus · 30g Walnüsse · 200g Karotte + Hummus', n: { kcal: 450, p: 12, c: 40, f: 28, b: 10 } },
+  { time: '17:00', name: 'Post-Workout (nur Trainingstag)', i: '1 Banane · 1 Scheibe Vollkornbrot · 1 EL Mandelmus', n: { kcal: 350, p: 8, c: 55, f: 14, b: 7 }, optional: true },
+  { time: '20:00', name: 'Linsen-Kichererbsen-Bowl ★', i: '100g rote Linsen + 1 Dose Kichererbsen · 100g Tofu fest · Zucchini + Paprika in Olivenöl · 2 EL Tahini · 50g Spinat · Zitrone · Knoblauch · Kreuzkümmel · 1 EL Hefeflocken', n: { kcal: 880, p: 55, c: 100, f: 28, b: 25 } },
 ];
-const todayMeals = mealsByDay[today.getDay()];
+const dailyTargets = { kcal: 2500, p: 110, c: 280, f: 80, b: 30 };
+const total = fixedMeals.reduce((a, m) => ({
+  kcal: a.kcal + m.n.kcal, p: a.p + m.n.p, c: a.c + m.n.c, f: a.f + m.n.f, b: a.b + m.n.b
+}), { kcal: 0, p: 0, c: 0, f: 0, b: 0 });
+const labels = { kcal: 'Kalorien', p: 'Protein (g)', c: 'Kohlenhydrate (g)', f: 'Fett (g)', b: 'Ballaststoffe (g)' };
 document.getElementById('meals').innerHTML = `
-  <div class="meal-block">
-    <div class="meal-time">10:00</div>
-    <div><div class="meal-name">${todayMeals.b.name}</div><div class="meal-ingredients">${todayMeals.b.i}</div></div>
-  </div>
-  <div class="meal-block">
-    <div class="meal-time">14:00</div>
-    <div><div class="meal-name">Mittagessen (Reste / Snack)</div><div class="meal-ingredients">Reste vom Vortag, oder: Hummus + Karotte + Vollkornbrot, oder Apfel + Mandelmus</div></div>
-  </div>
-  <div class="meal-block">
-    <div class="meal-time">20:00</div>
-    <div><div class="meal-name">${todayMeals.d.name}</div><div class="meal-ingredients">${todayMeals.d.i}</div></div>
+  ${fixedMeals.map(m => `
+    <div class="meal-block ${m.optional ? 'optional' : ''}">
+      <div class="meal-time">${m.time}</div>
+      <div style="flex: 1;">
+        <div class="meal-name">${m.name}</div>
+        <div class="meal-ingredients">${m.i}</div>
+        <div class="meal-nutrition">${m.n.kcal} kcal · ${m.n.p}g P · ${m.n.c}g K · ${m.n.f}g F · ${m.n.b}g Ballast.</div>
+      </div>
+    </div>
+  `).join('')}
+  <div style="border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px;">
+    <div class="card-title" style="margin-bottom: 10px;">Tagesbilanz</div>
+    ${['kcal', 'p', 'c', 'f', 'b'].map(k => {
+      const pct = Math.min(100, (total[k] / dailyTargets[k]) * 100);
+      return `
+        <div class="nutrition-row">
+          <div class="nutrition-label">
+            <span>${labels[k]}</span>
+            <span class="nutrition-vals"><strong>${total[k]}</strong> / ${dailyTargets[k]}</span>
+          </div>
+          <div class="nutrition-bar"><div class="nutrition-fill" style="width: ${pct}%"></div></div>
+        </div>
+      `;
+    }).join('')}
+    <div class="note">Ziel basiert auf 19J · 69kg · 185cm · aktiv. Trainingstag inkl. Post-Workout-Snack erreicht ~2450 kcal · 102g Protein.</div>
   </div>
 `;
 
@@ -567,9 +599,10 @@ setInterval(renderTimeline, 60000);
 // === SUPPLEMENTS ===
 const suppGroups = [
   { time: '08:00', label: 'Morgens · mit Frühstück', items: [
-    { id: 'nac_am', name: 'NAC', dose: '600 mg', detail: '1 Kapsel, mit Wasser' },
+    { id: 'nac_am', name: 'NAC', dose: '600 mg', detail: '1 Kapsel mit Wasser' },
     { id: 'd3', name: 'Vitamin D3 + K2', dose: '3000-5000 IU', detail: '3-5 Kapseln (1000 IU/Kap)' },
     { id: 'omega_am', name: 'Omega-3 DHA', dose: '~1 g', detail: '2 Kapseln zum Essen' },
+    { id: 'asta', name: 'Astaxanthin', dose: '4 mg', detail: '1 Kapsel · Antioxidans für Haut' },
   ]},
   { time: '13:00', label: 'Mittags · optional', items: [
     { id: 'omega_pm', name: 'Omega-3 DHA', dose: '~500 mg', detail: '1 Kapsel (wenn nicht morgens 2)' },
@@ -577,6 +610,7 @@ const suppGroups = [
   { time: '21:30', label: 'Abends · vor Schlaf', items: [
     { id: 'nac_pm', name: 'NAC', dose: '600 mg', detail: '1 Kapsel' },
     { id: 'zinc', name: 'Zink Glycinat', dose: '30 mg', detail: 'nüchtern, 30 Min vor Schlaf' },
+    { id: 'ash', name: 'Ashwagandha', dose: '450 mg', detail: '1 Kapsel bei Stress · 4 Wochen pausieren wenn Akne stagniert' },
   ]},
 ];
 function renderSupps() {
@@ -719,9 +753,27 @@ function renderChecks() {
       <div class="checkbox"></div>
       <div><div class="checkbox-label">Kissenbezug gewechselt / gedreht</div></div>
     </div>
+    <div class="pullup-row">
+      <div class="pullup-header">
+        <div>
+          <div class="counter-label">Klimmzüge heute</div>
+          <div class="counter-info">über den Tag verteilt addieren</div>
+        </div>
+        <div class="counter-value ok" style="font-size: 28px;">${dayData.pullups ?? 0}</div>
+      </div>
+      <div class="pullup-btns">
+        <button class="pullup-btn" onclick="changePullups(1)">+1</button>
+        <button class="pullup-btn" onclick="changePullups(3)">+3</button>
+        <button class="pullup-btn" onclick="changePullups(5)">+5</button>
+        <button class="pullup-btn minus" onclick="changePullups(-1)">−1</button>
+        <button class="pullup-btn reset" onclick="resetPullups()">Reset</button>
+      </div>
+    </div>
   `;
 }
 window.changeEggs = d => { dayData.eggs = Math.max(0, (dayData.eggs ?? 0) + d); saveDay(); renderChecks(); };
+window.changePullups = d => { dayData.pullups = Math.max(0, (dayData.pullups ?? 0) + d); saveDay(); renderChecks(); };
+window.resetPullups = () => { if (confirm('Klimmzüge-Counter heute zurücksetzen?')) { dayData.pullups = 0; saveDay(); renderChecks(); } };
 renderChecks();
 document.getElementById('checks').addEventListener('click', e => {
   const r = e.target.closest('.checkbox-row'); if (!r) return;
