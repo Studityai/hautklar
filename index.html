@@ -439,15 +439,21 @@ const SETTINGS_KEY = 'hautklar.settings';
 const GOALS_KEY = 'hautklar.goals';
 const TOTAL_DAYS = 42;
 
-if (!localStorage.getItem(START_KEY)) {
-  localStorage.setItem(START_KEY, new Date().toISOString().split('T')[0]);
+function localDateStr(d) {
+  const y = d.getFullYear(); const m = ('0'+(d.getMonth()+1)).slice(-2); const day = ('0'+d.getDate()).slice(-2);
+  return y + '-' + m + '-' + day;
 }
-const startDate = new Date(localStorage.getItem(START_KEY));
 const today = new Date(); today.setHours(0,0,0,0);
-const dayNumber = Math.min(Math.floor((today - startDate) / 86400000) + 1, TOTAL_DAYS);
+if (!localStorage.getItem(START_KEY)) {
+  localStorage.setItem(START_KEY, localDateStr(today));
+}
+const startStr = localStorage.getItem(START_KEY);
+const todayStr = localDateStr(today);
+const dayDiff = Math.round((new Date(todayStr + 'T00:00:00') - new Date(startStr + 'T00:00:00')) / 86400000);
+const dayNumber = Math.max(1, Math.min(dayDiff + 1, TOTAL_DAYS));
 document.getElementById('dayCounter').textContent = `Tag ${dayNumber} / ${TOTAL_DAYS}`;
 
-const todayKey = DAY_PREFIX + today.toISOString().split('T')[0];
+const todayKey = DAY_PREFIX + todayStr;
 let dayData = JSON.parse(localStorage.getItem(todayKey) || '{}');
 function saveDay() { localStorage.setItem(todayKey, JSON.stringify(dayData)); updateStats(); }
 
@@ -828,7 +834,7 @@ function renderPhotoTab() {
   const hist = [];
   for (let i = 0; i < 30; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     if (data && data.photos) {
       const total = Object.values(data.photos).filter(v => v).length;
       if (total > 0) hist.push({ date: d, total });
@@ -871,7 +877,7 @@ function updateStats() {
   let broken = false;
   for (let i = 0; i < 60; i++) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     if (data) {
       if (data.sleep) allSleep.push(data.sleep);
       const c = calcCompliance(data);
@@ -887,7 +893,7 @@ function updateStats() {
   grid.innerHTML = '';
   for (let i = 13; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     const cell = document.createElement('div');
     cell.className = 'history-day'; cell.textContent = d.getDate();
     if (data) {
@@ -913,7 +919,7 @@ function drawLineChart(canvasId, dataKey, color, targetVal, invert) {
   const values = [];
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     values.push(data && data[dataKey] ? data[dataKey] : null);
   }
   const pad = 8;
@@ -965,7 +971,7 @@ function drawBarChart(canvasId) {
   const values = [];
   for (let i = 27; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     values.push(data && data.training && data.training.duration ? data.training.duration : 0);
   }
   const pad = 8;
@@ -997,7 +1003,7 @@ function renderWeeklyReport() {
 
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
-    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + d.toISOString().split('T')[0]) || 'null');
+    const data = JSON.parse(localStorage.getItem(DAY_PREFIX + localDateStr(d)) || 'null');
     if (!data) continue;
     if (data.sleep) { totalSleep += data.sleep; sleepDays++; }
     if (data.training?.sport) workouts[data.training.sport] = (workouts[data.training.sport] || 0) + 1;
@@ -1183,7 +1189,7 @@ window.exportData = () => {
   const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `hautklar-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `hautklar-export-${localDateStr(new Date())}.json`;
   a.click();
 };
 window.resetData = () => {
@@ -1193,7 +1199,7 @@ window.resetData = () => {
 };
 window.resetStartDate = () => {
   if (!confirm('Tageszähler auf Tag 1 zurücksetzen?')) return;
-  localStorage.setItem(START_KEY, new Date().toISOString().split('T')[0]);
+  localStorage.setItem(START_KEY, localDateStr(new Date()));
   location.reload();
 };
 </script>
